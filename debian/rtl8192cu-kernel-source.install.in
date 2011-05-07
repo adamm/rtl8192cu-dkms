@@ -4,4 +4,4 @@ include/*			usr/src/rtl8192cu-#VERSION#/include
 os_dep/*			usr/src/rtl8192cu-#VERSION#/os_dep
 Makefile			usr/src/rtl8192cu-#VERSION#
 debian/dkms.conf	usr/src/rtl8192cu-#VERSION#
-
+debian/patches/*	usr/src/rtl8192cu-#VERSION#/patches

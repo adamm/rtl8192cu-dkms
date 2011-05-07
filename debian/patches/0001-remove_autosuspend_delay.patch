@@ -1,0 +1,12 @@
+Index: rtl8192cu/os_dep/linux/usb_intf.c
+===================================================================
+--- rtl8192cu.orig/os_dep/linux/usb_intf.c	2011-05-07 11:35:56.625456996 -0600
++++ rtl8192cu/os_dep/linux/usb_intf.c	2011-05-07 11:36:03.673457001 -0600
+@@ -1035,7 +1035,6 @@
+ 	if( padapter->registrypriv.power_mgnt != PS_MODE_ACTIVE )
+ 	{
+ 		if(padapter->registrypriv.usbss_enable ){ 	/* autosuspend (2s delay) */
+-			pdvobjpriv->pusbdev->autosuspend_delay = 0 * HZ;//15 * HZ; idle-delay time		 	
+ 
+ 			#if (LINUX_VERSION_CODE>=KERNEL_VERSION(2,6,35))
+ 			usb_enable_autosuspend(padapter->dvobjpriv.pusbdev);
