@@ -1,6 +1,7 @@
-src/lib/*.txt		usr/src/rtl8192cu-#VERSION#/lib
-src/src/*			usr/src/rtl8192cu-#VERSION#/src
+core/*			usr/src/rtl8192cu-#VERSION#/core
+hal/*			usr/src/rtl8192cu-#VERSION#/hal
+include/*			usr/src/rtl8192cu-#VERSION#/include
+os_dep/*			usr/src/rtl8192cu-#VERSION#/os_dep
 Makefile			usr/src/rtl8192cu-#VERSION#
 debian/dkms.conf	usr/src/rtl8192cu-#VERSION#
-debian/patches/*	usr/src/rtl8192cu-#VERSION#/patches
 
