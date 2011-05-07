@@ -26,11 +26,11 @@
 
 struct pkt_file {
 	_pkt *pkt;
-	u32	pkt_len;	 //the remainder length of the open_file
+	SIZE_T pkt_len;	 //the remainder length of the open_file
 	_buffer *cur_buffer;
 	u8 *buf_start;
 	u8 *cur_addr;
-	u32 buf_len;
+	SIZE_T buf_len;
 };
 
 #ifdef PLATFORM_WINDOWS

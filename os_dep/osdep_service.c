@@ -24,25 +24,103 @@
 #include <osdep_service.h>
 #include <drv_types.h>
 #include <recv_osdep.h>
+#include <linux/vmalloc.h>
 
 
 #define RT_TAG	'1178'
 
-u8* _rtw_malloc(u32 sz)
+
+inline u8* _rtw_vmalloc(u32 sz)
 {
-
 	u8 	*pbuf;
-
-#ifdef PLATFORM_LINUX
-
-	pbuf = 	kmalloc(sz, /*GFP_KERNEL*/GFP_ATOMIC);
-
+#ifdef PLATFORM_LINUX	
+	pbuf = vmalloc(sz);	
 #endif	
 	
 #ifdef PLATFORM_WINDOWS
+	NdisAllocateMemoryWithTag(&pbuf,sz, RT_TAG);	
+#endif
 
+	return pbuf;	
+}
+
+inline u8* _rtw_zvmalloc(u32 sz)
+{
+	u8 	*pbuf;
+#ifdef PLATFORM_LINUX
+	pbuf = _rtw_vmalloc(sz);
+	if (pbuf != NULL)
+		memset(pbuf, 0, sz);
+#endif	
+	
+#ifdef PLATFORM_WINDOWS
 	NdisAllocateMemoryWithTag(&pbuf,sz, RT_TAG);
+	if (pbuf != NULL)
+		NdisFillMemory(pbuf, sz, 0);
+#endif
 
+	return pbuf;	
+}
+
+inline void _rtw_vmfree(u8 *pbuf, u32 sz)
+{
+#ifdef	PLATFORM_LINUX
+	vfree(pbuf);
+#endif	
+	
+#ifdef PLATFORM_WINDOWS
+	NdisFreeMemory(pbuf,sz, 0);
+#endif
+}
+
+
+inline u8* dbg_rtw_vmalloc(u32 sz, const char *func, int line)
+{
+	DBG_871X("%s:%d %s(%d)\n", func,  line, __FUNCTION__, (sz));
+	return _rtw_vmalloc((sz));
+}
+
+inline u8* dbg_rtw_zvmalloc(u32 sz, const char *func, int line)
+{
+	DBG_871X("%s:%d %s(%d)\n", func, line, __FUNCTION__, (sz)); 
+	return _rtw_zvmalloc((sz)); 
+}
+
+inline void dbg_rtw_vmfree(u8 *pbuf, u32 sz, const char *func, int line)
+{
+	DBG_871X("%s:%d %s(%p,%d)\n",  func, line, __FUNCTION__, (pbuf), (sz));
+	_rtw_vmfree((pbuf), (sz)); 
+}
+
+u8* _rtw_zmalloc(u32 sz)
+{
+	u8 	*pbuf;
+#ifdef PLATFORM_LINUX
+	// kzalloc(sz, GFP_KERNEL);
+	pbuf = 	kmalloc(sz, /*GFP_KERNEL*/GFP_ATOMIC);
+	if (pbuf != NULL)
+		memset(pbuf, 0, sz);
+#endif	
+	
+#ifdef PLATFORM_WINDOWS
+	NdisAllocateMemoryWithTag(&pbuf,sz, RT_TAG);
+	if (pbuf != NULL)
+		NdisFillMemory(pbuf, sz, 0);
+#endif
+
+	return pbuf;	
+	
+}
+
+u8* _rtw_malloc(u32 sz)
+{
+	u8 	*pbuf;
+#ifdef PLATFORM_LINUX	
+	pbuf = 	kmalloc(sz, /*GFP_KERNEL*/GFP_ATOMIC);	
+#endif	
+	
+#ifdef PLATFORM_WINDOWS
+	NdisAllocateMemoryWithTag(&pbuf,sz, RT_TAG);	
 #endif
 
 	return pbuf;	
@@ -66,6 +144,29 @@ void	_rtw_mfree(u8 *pbuf, u32 sz)
 	
 	
 }
+
+
+inline u8* dbg_rtw_malloc(u32 sz, const char *func, int line) 
+{
+	if((sz)>4096) 
+		DBG_871X("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%s:%d %s(%d)\n", func, line, __FUNCTION__, (sz)); 
+	return _rtw_malloc((sz)); 
+}
+
+inline u8* dbg_rtw_zmalloc(u32 sz, const char *func, int line)
+{
+	if((sz)>4096)
+		DBG_871X("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%s:%d %s(%d)\n", func, line, __FUNCTION__, (sz));
+	return _rtw_zmalloc((sz));
+}
+
+inline void dbg_rtw_mfree(u8 *pbuf, u32 sz, const char *func, int line)
+{
+	//DBG_871X("%s:%d %s(%p,%d)\n", func, line, __FUNCTION__, (pbuf), (sz));
+	_rtw_mfree((pbuf), (sz));
+}
+
+
 void _rtw_memcpy(void* dst, void* src, u32 sz)
 {
 
@@ -285,21 +386,26 @@ u32 _rtw_down_sema(_sema *sema)
 
 
 
-void	_rtw_rwlock_init(_rwlock *prwlock)
+void	_rtw_mutex_init(_mutex *pmutex)
 {
 #ifdef PLATFORM_LINUX
 
-	sema_init(prwlock, 1);
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,37))
+	mutex_init(pmutex);
+#else
+	init_MUTEX(pmutex);
 #endif
+	
+#endif
+
 #ifdef PLATFORM_OS_XP
 
-	KeInitializeMutex(prwlock, 0);
+	KeInitializeMutex(pmutex, 0);
 
 #endif
 
 #ifdef PLATFORM_OS_CE
-	*prwlock =  CreateMutex( NULL, _FALSE, NULL);
+	*pmutex =  CreateMutex( NULL, _FALSE, NULL);
 #endif
 }
 

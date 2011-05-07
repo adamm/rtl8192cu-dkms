@@ -93,6 +93,7 @@ void rtw_init_mlme_timer(_adapter *padapter)
 
 }
 
+extern void rtw_indicate_wx_scan_complete_event(_adapter *padapter);
 extern void rtw_indicate_wx_assoc_event(_adapter *padapter);
 extern void rtw_indicate_wx_disassoc_event(_adapter *padapter);
 
@@ -100,7 +101,6 @@ void rtw_os_indicate_connect(_adapter *adapter)
 {
 
 _func_enter_;	
-
         rtw_indicate_wx_assoc_event(adapter);
 	netif_carrier_on(adapter->pnetdev);
 
@@ -109,62 +109,75 @@ _func_exit_;
 }
 
 static RT_PMKID_LIST   backupPMKIDList[ NUM_PMKID_CACHE ];
+
+void rtw_reset_securitypriv( _adapter *adapter )	
+{
+	 u8              backupPMKIDIndex = 0;
+ 	 u8              backupTKIPCountermeasure = 0x00;
+	 
+	if(adapter->securitypriv.dot11AuthAlgrthm == dot11AuthAlgrthm_8021X)//802.1x
+   	{		 
+	        // Added by Albert 2009/02/18
+	        // We have to backup the PMK information for WiFi PMK Caching test item.
+	        //
+	        // Backup the btkip_countermeasure information.
+	        // When the countermeasure is trigger, the driver have to disconnect with AP for 60 seconds.
+	        
+	        _rtw_memset( &backupPMKIDList[ 0 ], 0x00, sizeof( RT_PMKID_LIST ) * NUM_PMKID_CACHE );
+
+	        _rtw_memcpy( &backupPMKIDList[ 0 ], &adapter->securitypriv.PMKIDList[ 0 ], sizeof( RT_PMKID_LIST ) * NUM_PMKID_CACHE );
+	        backupPMKIDIndex = adapter->securitypriv.PMKIDIndex;
+	        backupTKIPCountermeasure = adapter->securitypriv.btkip_countermeasure;
+
+	       _rtw_memset((unsigned char *)&adapter->securitypriv, 0, sizeof (struct security_priv));
+	       _init_timer(&(adapter->securitypriv.tkip_timer),adapter->pnetdev, rtw_use_tkipkey_handler, adapter);
+		#ifdef ENABLE_HW_ENC_TIMER
+		_init_timer(&(adapter->securitypriv.enable_hw_enc_timer),adapter->pnetdev, rtw_enable_hw_enc_handler, adapter);
+		#endif
+
+	       // Added by Albert 2009/02/18
+	       // Restore the PMK information to securitypriv structure for the following connection.
+	       _rtw_memcpy( &adapter->securitypriv.PMKIDList[ 0 ], &backupPMKIDList[ 0 ], sizeof( RT_PMKID_LIST ) * NUM_PMKID_CACHE );
+	       adapter->securitypriv.PMKIDIndex = backupPMKIDIndex;
+	       adapter->securitypriv.btkip_countermeasure = backupTKIPCountermeasure;
+		 #ifdef ENABLE_HW_ENC_TIMER
+		adapter->securitypriv.sw_encrypt= 1; 
+		 #else
+		adapter->securitypriv.sw_encrypt= adapter->registrypriv.software_encrypt;
+		 #endif
+
+		adapter->securitypriv.ndisauthtype = Ndis802_11AuthModeOpen;
+		adapter->securitypriv.ndisencryptstatus = Ndis802_11WEPDisabled;
+
+	   }
+	   else //reset values in securitypriv 
+	   {	   	
+		struct security_priv *psec_priv=&adapter->securitypriv;
+
+		psec_priv->dot11AuthAlgrthm =dot11AuthAlgrthm_Open;  //open system
+		psec_priv->dot11PrivacyAlgrthm = _NO_PRIVACY_;
+		psec_priv->dot11PrivacyKeyIndex = 0;
+
+		psec_priv->dot118021XGrpPrivacy = _NO_PRIVACY_;
+		psec_priv->dot118021XGrpKeyid = 1;
+
+		psec_priv->ndisauthtype = Ndis802_11AuthModeOpen;
+		psec_priv->ndisencryptstatus = Ndis802_11WEPDisabled;	
+		psec_priv->wps_phase = _FALSE;
+	   	
+	   }
+}
+
 void rtw_os_indicate_disconnect( _adapter *adapter )
 {
    //RT_PMKID_LIST   backupPMKIDList[ NUM_PMKID_CACHE ];
-   u8              backupPMKIDIndex = 0;
-   u8              backupTKIPCountermeasure = 0x00;
+  
       
 _func_enter_;
 
-   rtw_indicate_wx_disassoc_event(adapter);	
-   netif_carrier_off(adapter->pnetdev);
-	
-   if(adapter->securitypriv.dot11AuthAlgrthm == dot11AuthAlgrthm_8021X)//802.1x
-   {		 
-        // Added by Albert 2009/02/18
-        // We have to backup the PMK information for WiFi PMK Caching test item.
-        //
-        // Backup the btkip_countermeasure information.
-        // When the countermeasure is trigger, the driver have to disconnect with AP for 60 seconds.
-        
-        _rtw_memset( &backupPMKIDList[ 0 ], 0x00, sizeof( RT_PMKID_LIST ) * NUM_PMKID_CACHE );
-
-        _rtw_memcpy( &backupPMKIDList[ 0 ], &adapter->securitypriv.PMKIDList[ 0 ], sizeof( RT_PMKID_LIST ) * NUM_PMKID_CACHE );
-        backupPMKIDIndex = adapter->securitypriv.PMKIDIndex;
-        backupTKIPCountermeasure = adapter->securitypriv.btkip_countermeasure;
-
-       _rtw_memset((unsigned char *)&adapter->securitypriv, 0, sizeof (struct security_priv));
-       _init_timer(&(adapter->securitypriv.tkip_timer),adapter->pnetdev, rtw_use_tkipkey_handler, adapter);
-
-       // Added by Albert 2009/02/18
-       // Restore the PMK information to securitypriv structure for the following connection.
-       _rtw_memcpy( &adapter->securitypriv.PMKIDList[ 0 ], &backupPMKIDList[ 0 ], sizeof( RT_PMKID_LIST ) * NUM_PMKID_CACHE );
-       adapter->securitypriv.PMKIDIndex = backupPMKIDIndex;
-       adapter->securitypriv.btkip_countermeasure = backupTKIPCountermeasure;
-
-	adapter->securitypriv.ndisauthtype = Ndis802_11AuthModeOpen;
-	adapter->securitypriv.ndisencryptstatus = Ndis802_11WEPDisabled;
-
-   }
-   else //reset values in securitypriv 
-   {
-   	//if(adapter->mlmepriv.fw_state & WIFI_STATION_STATE)
-   	//{
-	struct security_priv *psec_priv=&adapter->securitypriv;
-
-	psec_priv->dot11AuthAlgrthm =dot11AuthAlgrthm_Open;  //open system
-	psec_priv->dot11PrivacyAlgrthm = _NO_PRIVACY_;
-	psec_priv->dot11PrivacyKeyIndex = 0;
-
-	psec_priv->dot118021XGrpPrivacy = _NO_PRIVACY_;
-	psec_priv->dot118021XGrpKeyid = 1;
-
-	psec_priv->ndisauthtype = Ndis802_11AuthModeOpen;
-	psec_priv->ndisencryptstatus = Ndis802_11WEPDisabled;	
-	psec_priv->wps_phase = _FALSE;
-   	//}
-   }
+   	rtw_indicate_wx_disassoc_event(adapter);	
+   	netif_carrier_off(adapter->pnetdev);
+	rtw_reset_securitypriv(adapter); 
 
 _func_exit_;
 
@@ -185,9 +198,9 @@ _func_enter_;
 	{
 		RT_TRACE(_module_mlme_osdep_c_,_drv_info_,("rtw_report_sec_ie, authmode=%d\n", authmode));
 		
-		buff = _rtw_malloc(IW_CUSTOM_MAX);
+		buff = rtw_zmalloc(IW_CUSTOM_MAX);
 		
-		_rtw_memset(buff,0,IW_CUSTOM_MAX);
+		//_rtw_memset(buff,0,IW_CUSTOM_MAX);
 		
 		p=buff;
 		
@@ -211,7 +224,7 @@ _func_enter_;
 		wireless_send_event(adapter->pnetdev,IWEVCUSTOM,&wrqu,buff);
 
 		if(buff)
-		    _rtw_mfree(buff, IW_CUSTOM_MAX);
+		    rtw_mfree(buff, IW_CUSTOM_MAX);
 		
 	}
 

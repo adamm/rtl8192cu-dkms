@@ -99,12 +99,16 @@
 	typedef void (*proc_t)(void*);
 
 	typedef 	__kernel_size_t	SIZE_T;	
-	#define FIELD_OFFSET(s,field)	((int)&((s*)(0))->field)
+	typedef	__kernel_ssize_t	SSIZE_T;
+	#define FIELD_OFFSET(s,field)	((SSIZE_T)&((s*)(0))->field)
 	
 #endif
 
 #define MEM_ALIGNMENT_OFFSET	(sizeof (SIZE_T))
 #define MEM_ALIGNMENT_PADDING	(sizeof(SIZE_T) - 1)
+
+#define SIZE_PTR SIZE_T
+#define SSIZE_PTR SSIZE_T
 
 typedef unsigned char	BOOLEAN,*PBOOLEAN;
 

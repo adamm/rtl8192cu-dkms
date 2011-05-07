@@ -152,9 +152,12 @@ enum rtw_drvextra_cmd_id
 	DYNAMIC_CHK_WK_CID,
 	DM_CTRL_WK_CID,
 	PBC_POLLING_WK_CID,
-	BEFORE_ASSOC_PS_CTRL_WK_CID,
+	POWER_SAVING_CTRL_WK_CID,//IPS,AUTOSuspend
 	LPS_CTRL_WK_CID,
 	ANT_SELECT_WK_CID,
+#ifdef SILENT_RESET_FOR_SPECIFIC_PLATFOM
+	USB_IO_CHECK_WK_CID,
+#endif
 	MAX_WK_CID
 };
 
@@ -252,7 +255,7 @@ Command-Event Mode
 
 */
 struct sitesurvey_parm {
-	sint passive_mode;	//active: 1, passive: 0 
+	sint scan_mode;	//active: 1, passive: 0 
 	sint bsslimit;	// 1 ~ 48
 	sint	ss_ssidlen;
 	u8 	ss_ssid[IW_ESSID_MAX_SIZE + 1];

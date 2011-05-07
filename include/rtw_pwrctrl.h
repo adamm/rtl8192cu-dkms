@@ -45,6 +45,7 @@
 #define CMD_ALIVE	BIT(2)
 #define EVT_ALIVE	BIT(3)
 
+#define PWR_STATE_CHECK_CNT 4
 
 enum Power_Mgnt
 {
@@ -177,7 +178,7 @@ struct	pwrctrl_priv {
 	s32		pnp_current_pwr_state;
 	u8		pnp_bstop_trx;
 	u8		bInternalAutoSuspend;
-	u8		bSupportRemoteWakeup;
+	u8		bSupportRemoteWakeup;	
 //===========================================
 	_timer 	pwr_state_check_timer;
 	int		pwr_state_check_inverval;
@@ -185,6 +186,7 @@ struct	pwrctrl_priv {
 	uint 		bips_processing;
 
 	_workitem InactivePSWorkItem;
+
 	rt_rf_power_state current_rfpwrstate;
 	rt_rf_power_state	change_rfpwrstate;
 	
@@ -198,7 +200,10 @@ struct	pwrctrl_priv {
 	u8		brfoffbyhw;
 	unsigned long PS_BBRegBackup[PSBBREG_TOTALCNT];
 	//=========================================
-	
+	#ifdef CONFIG_WOWLAN
+	u8		bSupportWakeOnWlan;
+	#endif
+	u32 rf_phy_bb_backup[22];
 };
 
 
@@ -215,7 +220,7 @@ extern sint rtw_register_evt_alive(_adapter *padapter);
 extern void rtw_unregister_evt_alive(_adapter *padapter);
 extern void cpwm_int_hdl(_adapter *padapter, struct reportpwrstate_parm *preportpwrstate);
 extern void rtw_set_ps_mode(_adapter * padapter, uint ps_mode, uint smart_ps);
-static void set_rpwm(_adapter * padapter, u8 val8);
+extern void set_rpwm(_adapter * padapter, u8 val8);
 extern void LeaveAllPowerSaveMode(PADAPTER Adapter);
 
 #ifdef CONFIG_AUTOSUSPEND
@@ -235,5 +240,5 @@ void LPS_Enter(PADAPTER padapter);
 void LPS_Leave(PADAPTER padapter);
 u8 FWLPS_RF_ON(PADAPTER padapter);
 #endif
-void before_assoc_ps_ctrl_wk_hdl(_adapter *padapter, u8 *pbuf, int sz);
+void power_saving_ctrl_wk_hdl(_adapter *padapter, u8 *pbuf, int sz);
 #endif  //__RTL871X_PWRCTRL_H_

@@ -215,6 +215,9 @@ _func_enter_;
        if(skb == NULL)
        {        
             RT_TRACE(_module_recv_osdep_c_,_drv_err_,("rtw_recv_indicatepkt():skb==NULL something wrong!!!!\n"));		   
+		#ifdef DBG_RX_SHOW_802_1X
+		DBG_871X("rtw_recv_indicatepkt():skb==NULL something wrong!!!!\n");
+		#endif
 	     goto _recv_indicatepkt_drop;
 	}
 
@@ -224,7 +227,13 @@ _func_enter_;
 	RT_TRACE(_module_recv_osdep_c_,_drv_info_,("precv_frame->hdr.rx_tail=%p precv_frame->u.hdr.rx_end=%p precv_frame->hdr.len=%d \n", precv_frame->u.hdr.rx_tail, precv_frame->u.hdr.rx_end, precv_frame->u.hdr.len));
 		
 	skb->data = precv_frame->u.hdr.rx_data;
-	skb->tail = precv_frame->u.hdr.rx_tail;	
+	
+#ifdef NET_SKBUFF_DATA_USES_OFFSET	
+	skb_set_tail_pointer(skb, precv_frame->u.hdr.len);
+#else
+	skb->tail = precv_frame->u.hdr.rx_tail;
+#endif
+
 	skb->len = precv_frame->u.hdr.len;
 	
 	RT_TRACE(_module_recv_osdep_c_,_drv_info_,("\n skb->head=%p skb->data=%p skb->tail=%p skb->end=%p skb->len=%d\n", skb->head, skb->data, skb->tail, skb->end, skb->len));
@@ -294,6 +303,11 @@ _func_enter_;
 
 	skb->dev = padapter->pnetdev;
 	skb->protocol = eth_type_trans(skb, padapter->pnetdev);
+	
+#ifdef DBG_RX_SHOW_802_1X
+	if(ETH_P_PAE == ntohs(skb->protocol)) 
+		DBG_871X("%s: netif_rx 0x%04X\n",__FUNCTION__,ntohs(skb->protocol));
+#endif	
 	
 	netif_rx(skb);
 

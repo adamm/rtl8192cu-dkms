@@ -554,16 +554,17 @@ phy_RFSerialRead(
 		tmplong2 = tmplong;
 	else
 	tmplong2 = PHY_QueryBBReg(Adapter, pPhyReg->rfHSSIPara2, bMaskDWord);
+	
 	tmplong2 = (tmplong2 & (~bLSSIReadAddress)) | (NewOffset<<23) | bLSSIReadEdge;	//T65 RF
 	
 	PHY_SetBBReg(Adapter, rFPGA0_XA_HSSIParameter2, bMaskDWord, tmplong&(~bLSSIReadEdge));	
-	rtw_udelay_os(1000);// PlatformStallExecution(1000);
+	rtw_udelay_os(10);// PlatformStallExecution(1000);
 	
 	PHY_SetBBReg(Adapter, pPhyReg->rfHSSIPara2, bMaskDWord, tmplong2);	
-	rtw_udelay_os(1000);//PlatformStallExecution(1000);
+	rtw_udelay_os(100);//PlatformStallExecution(1000);
 	
 	PHY_SetBBReg(Adapter, rFPGA0_XA_HSSIParameter2, bMaskDWord, tmplong|bLSSIReadEdge);	
-	rtw_udelay_os(1000);//PlatformStallExecution(1000);
+	rtw_udelay_os(10);//PlatformStallExecution(1000);
 
 	if(eRFPath == RF90_PATH_A)
 		RfPiEnable = (u8)PHY_QueryBBReg(Adapter, rFPGA0_XA_HSSIParameter1, BIT8);
@@ -791,6 +792,7 @@ PHY_BBConfig8192C(
 	u8		PathMap = 0, index = 0, rf_num = 0;
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
 	u32	RegVal;
+	u8 value8;
 
 	phy_InitBBRFRegisterDefinition(Adapter);
 
@@ -839,6 +841,31 @@ PHY_BBConfig8192C(
 			break;
 	}
 #endif	
+#if DEV_BUS_TYPE==DEV_BUS_USB_INTERFACE
+	if(IS_VENDOR_UMC_B_CUT(pHalData->VersionID)
+		&&(pHalData->BoardType == BOARD_USB_High_PA))
+			rtw_write8(Adapter, 0xc72, 0x50);		
+#endif		
+	
+	// <tynli_note> For fix 8723 WL_TRSW bug. Suggested by Scott. 2011.01.24.
+	if(IS_8723_SERIES(pHalData->VersionID))
+	{
+		if(!IS_NORMAL_CHIP(pHalData->VersionID))
+		{
+			// 1. 0x40[2] = 1	
+			value8 = rtw_read8(Adapter, REG_GPIO_MUXCFG);
+			rtw_write8(Adapter, REG_GPIO_MUXCFG, (value8|BIT2));
+
+			// 2. 0x804[14] = 0 // BB disable TRSW control, enable SW control
+			PHY_SetBBReg(Adapter, rFPGA0_TxInfo, BIT14, 0x0);
+			
+			// 3. 0x870[6:5] = 2'b11
+			PHY_SetBBReg(Adapter, rFPGA0_XAB_RFInterfaceSW, (BIT5|BIT6), 0x3);
+			
+			// 4. 0x860[6:5] = 2'b00 // BB SW control TRSW pin output level 
+			PHY_SetBBReg(Adapter, rFPGA0_XA_RFInterfaceOE, (BIT5|BIT6), 0x0);
+		}
+	}
 #if 0
 	// Check BB/RF confiuration setting.
 	// We only need to configure RF which is turned on.
@@ -903,6 +930,43 @@ PHY_RFConfig8192C(
 #endif
 	return rtStatus;
 }
+
+
+#ifdef RTL8192C_RECONFIG_TO_1T1R
+void	PHY_Reconfig_To_1T1R(_adapter *padapter)
+{
+	printk("###### %s #######\n",__FUNCTION__);
+	//BB (path B off)
+	PHY_SetBBReg(padapter, 0xc04, 0x000000ff, 0x11);
+	PHY_SetBBReg(padapter, 0xd04, 0x0000000f, 0x1);
+	PHY_SetBBReg(padapter, 0x90C, 0x000000ff, 0x11);
+	PHY_SetBBReg(padapter, 0x90C, 0x00f00000, 0x1);
+	PHY_SetBBReg(padapter, 0x88c, 0x00C00000, 0x11);
+
+	//ADDA (path-B off)
+	PHY_SetBBReg(padapter, 0x85C, bMaskDWord, 0x00db25a4);	
+	PHY_SetBBReg(padapter, 0xe6c, bMaskDWord, 0x20db25a4);
+	PHY_SetBBReg(padapter, 0xe70, bMaskDWord, 0x20db25a4);
+	PHY_SetBBReg(padapter, 0xe74, bMaskDWord, 0x041b25a4);	
+	PHY_SetBBReg(padapter, 0xe78, bMaskDWord, 0x041b25a4);	
+	PHY_SetBBReg(padapter, 0xe7c, bMaskDWord, 0x041b25a4);
+	PHY_SetBBReg(padapter, 0xe80, bMaskDWord, 0x041b25a4);
+	PHY_SetBBReg(padapter, 0xe84, bMaskDWord, 0x63db25a4);
+	PHY_SetBBReg(padapter, 0xe88, bMaskDWord, 0x041b25a4);
+	PHY_SetBBReg(padapter, 0xe8c, bMaskDWord, 0x20db25a4);
+	PHY_SetBBReg(padapter, 0xed0, bMaskDWord, 0x20db25a4);
+	PHY_SetBBReg(padapter, 0xed4, bMaskDWord, 0x20db25a4);
+	PHY_SetBBReg(padapter, 0xed8, bMaskDWord, 0x20db25a4);
+	PHY_SetBBReg(padapter, 0xedc, bMaskDWord, 0x001b25a4);
+	PHY_SetBBReg(padapter, 0xee0, bMaskDWord, 0x001b25a4);
+	PHY_SetBBReg(padapter, 0xeec, bMaskDWord, 0x24db25a4);
+
+	//RF
+	//path B to standby mode
+	PHY_SetBBReg(padapter, 0x844, bMaskDWord, 0x00010000);
+	
+}
+#endif
 
 VOID
 phy_BB8192C_Config_1T(
@@ -5219,6 +5283,12 @@ PHY_IQCalibrate(
 		_PHY_PathBFillIQKMatrix(pAdapter, bPathBOK, result, final_candidate, (RegEC4 == 0));
 	}
 	_PHY_SaveADDARegisters(pAdapter, IQK_BB_REG, pHalData->IQK_BB_backup, 10);
+
+	#ifdef RTL8192C_RECONFIG_TO_1T1R
+	if(IS_92C_SERIAL(pHalData->VersionID))
+		//path B to standby mode
+		PHY_SetBBReg(pAdapter, 0x844, bMaskDWord, 0x00010000);
+	#endif
 
 }
 

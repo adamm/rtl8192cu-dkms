@@ -111,8 +111,8 @@ typedef struct _RT_CHANNEL_PLAN
 // Scan type including active and passive scan.
 typedef enum _RT_SCAN_TYPE
 {
-	SCAN_ACTIVE,
 	SCAN_PASSIVE,
+	SCAN_ACTIVE,
 	SCAN_MIX,
 }RT_SCAN_TYPE, *PRT_SCAN_TYPE;
 
@@ -148,7 +148,7 @@ struct	ss_res
 	int							state;
 	int							bss_cnt;
 	int							channel_idx;
-	int							active_mode;
+	int							scan_mode;
 	int							ss_ssidlen;
 	unsigned char 	ss_ssid[IW_ESSID_MAX_SIZE + 1];
 };
@@ -219,6 +219,7 @@ struct mlme_ext_info
 	struct FW_Sta_Info FW_sta_info[NUM_STA];
 	// Accept ADDBA Request
 	BOOLEAN				bAcceptAddbaReq;	
+	unsigned char              bwmode_updated;	
 };
 // The channel information about this channel including joining, scanning, and power constraints.
 typedef struct _RT_CHANNEL_INFO
@@ -392,7 +393,7 @@ unsigned int OnAction(_adapter *padapter, union recv_frame *precv_frame);
 unsigned int OnAction_qos(_adapter *padapter, union recv_frame *precv_frame);
 unsigned int OnAction_dls(_adapter *padapter, union recv_frame *precv_frame);
 unsigned int OnAction_back(_adapter *padapter, union recv_frame *precv_frame);
-unsigned int OnAction_p2p(_adapter *padapter, union recv_frame *precv_frame);
+unsigned int OnAction_public(_adapter *padapter, union recv_frame *precv_frame);
 unsigned int OnAction_ht(_adapter *padapter, union recv_frame *precv_frame);
 unsigned int OnAction_wmm(_adapter *padapter, union recv_frame *precv_frame);
 
@@ -428,5 +429,9 @@ void	expire_timeout_chk(_adapter *padapter);
 	
 #endif //end of CONFIG_AP_MODE
 
+
+#ifdef SILENT_RESET_FOR_SPECIFIC_PLATFOM
+void silentreset_for_specific_platform(_adapter *padapter);
+#endif
 #endif
 

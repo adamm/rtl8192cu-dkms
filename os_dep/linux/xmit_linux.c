@@ -40,7 +40,7 @@
 
 uint rtw_remainder_len(struct pkt_file *pfile)
 {
-	return (pfile->buf_len - ((u32)(pfile->cur_addr) - (u32)(pfile->buf_start)));
+	return (pfile->buf_len - ((SIZE_PTR)(pfile->cur_addr) - (SIZE_PTR)(pfile->buf_start)));
 }
 
 void _rtw_open_pktfile (_pkt *pktptr, struct pkt_file *pfile)

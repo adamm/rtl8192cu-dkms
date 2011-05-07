@@ -83,7 +83,7 @@ _func_enter_;
 	pintfpriv->io_wsz = 0;
 	pintfpriv->io_rsz = 0;	
 	
- 	pintfpriv->allocated_io_rwmem = _rtw_malloc(pintfpriv->max_iosz +4); 
+ 	pintfpriv->allocated_io_rwmem = rtw_zmalloc(pintfpriv->max_iosz +4); 
 	
    	if (pintfpriv->allocated_io_rwmem == NULL){
 		RT_TRACE(_module_hci_ops_os_c_,_drv_err_,("\n usb_init_intf_priv:pintfpriv->allocated_io_rwmem == NULL\n"));
@@ -117,7 +117,7 @@ _func_exit_;
 usb_init_intf_priv_fail:
 
 	if (pintfpriv->allocated_io_rwmem)
-		_rtw_mfree((u8 *)(pintfpriv->allocated_io_rwmem), pintfpriv->max_iosz +4);
+		rtw_mfree((u8 *)(pintfpriv->allocated_io_rwmem), pintfpriv->max_iosz +4);
 	
 	if(piorw_urb)
 		ExFreePool(piorw_urb);	
@@ -136,7 +136,7 @@ _func_enter_;
 	
 	RT_TRACE(_module_hci_ops_os_c_,_drv_err_,("\n+usb_unload_intf_priv\n"));
 	
-	_rtw_mfree((u8 *)(pintfpriv->allocated_io_rwmem), pintfpriv->max_iosz+4);
+	rtw_mfree((u8 *)(pintfpriv->allocated_io_rwmem), pintfpriv->max_iosz+4);
 	
 #ifdef PLATFORM_WINDOWS
 	if(pintfpriv->piorw_urb)
@@ -429,7 +429,7 @@ NTSTATUS usb_write_mem_complete(PDEVICE_OBJECT	pUsbDevObj, PIRP piowrite_irp, PV
 	
 	_func_enter_;
 	
-	_enter_critical(&(pio_q->lock), &irqL);
+	_enter_critical_bh(&(pio_q->lock), &irqL);
 	
 	pintfpriv->io_irp_cnt--;
 	if(pintfpriv->io_irp_cnt ==0){		
@@ -458,7 +458,7 @@ NTSTATUS usb_write_mem_complete(PDEVICE_OBJECT	pUsbDevObj, PIRP piowrite_irp, PV
 		_rtw_up_sema(&pio_req->sema);
 	}	
 						
-	_exit_critical(&(pio_q->lock), &irqL);
+	_exit_critical_bh(&(pio_q->lock), &irqL);
 
 	_func_exit_;
 	
@@ -492,7 +492,7 @@ void usb_write_mem(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, u8 *wmem)
 		goto exit;
 	}	
 	
-	_enter_critical(&(pio_queue->lock), &irqL);
+	_enter_critical_bh(&(pio_queue->lock), &irqL);
 	
 	rtw_list_insert_tail(&(pio_req->list),&(pio_queue->processing));
 
@@ -564,7 +564,7 @@ void usb_write_mem(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, u8 *wmem)
 		return;//STATUS_UNSUCCESSFUL;
 	}
 
-	_exit_critical(&(pio_queue->lock), &irqL);
+	_exit_critical_bh(&(pio_queue->lock), &irqL);
 	
 	_rtw_down_sema(&pio_req->sema);	
 	free_ioreq(pio_req, pio_queue);

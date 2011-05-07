@@ -102,6 +102,15 @@ struct smooth_rssi_data {
 	u32	total_val;		//sum of valid elements
 };
 
+struct rtw_transfer_buffer
+{
+	_list list;
+	u8 *pallocated_transfer_buf;
+	u8 *transfer_buf;    // alignmented buffer 
+	u32 buffer_len;
+	u32 transfer_len;
+};
+
 struct rx_pkt_attrib	{
 	u8   physt;
 	u8 	amsdu;
@@ -234,6 +243,10 @@ struct recv_priv {
 	struct smooth_rssi_data signal_qual_data;
 	struct smooth_rssi_data signal_strength_data;
 	
+
+	_queue pending_rx_transfer_buffer_queue;
+	u32 pending_rx_transfer_buffer_cnt;
+	
 };
 
 
@@ -271,6 +284,13 @@ extern int	 rtw_free_recvframe(union recv_frame *precvframe, _queue *pfree_recv_
 static union recv_frame *dequeue_recvframe (_queue *queue);
 extern int	 rtw_enqueue_recvframe(union recv_frame *precvframe, _queue *queue);
 extern void rtw_free_recvframe_queue(_queue *pframequeue,  _queue *pfree_recv_queue);  
+
+
+void rtw_enqueue_rx_transfer_buffer(struct recv_priv *precvpriv, struct rtw_transfer_buffer *transfer_buffer);
+struct rtw_transfer_buffer *rtw_dequeue_rx_transfer_buffer(struct recv_priv *precvpriv);
+struct rtw_transfer_buffer *rtw_alloc_transfer_buffer(u32 sz);
+void rtw_free_transfer_buffer(struct rtw_transfer_buffer *transfer_buffer);
+void rtw_free_pending_transfer_buffers(struct recv_priv *precvpriv);
 
 
 __inline static u8 *get_rxmem(union recv_frame *precvframe)
@@ -421,7 +441,7 @@ __inline static _buffer * get_rxbuf_desc(union recv_frame *precvframe)
 	return buf_desc;
 }
 
-
+#if 0
 __inline static union recv_frame *rxmem_to_recvframe(u8 *rxmem)
 {
 	//due to the design of 2048 bytes alignment of recv_frame, we can reference the union recv_frame 
@@ -468,7 +488,7 @@ __inline static u8 *pkt_to_recvdata(_pkt *pkt)
 	return 	precv_frame->u.hdr.rx_data;
 	
 }
-
+#endif
 
 __inline static sint get_recvframe_len(union recv_frame *precvframe)
 {

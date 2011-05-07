@@ -2866,7 +2866,7 @@ struct mp_xmit_frame *alloc_mp_xmitframe(struct mp_priv *pmp_priv)
 
 _func_enter_;
 
-	_enter_critical(&pfree_xmit_queue->lock, &irqL);
+	_enter_critical_bh(&pfree_xmit_queue->lock, &irqL);
 
 	if (_rtw_queue_empty(pfree_xmit_queue) == _TRUE) {
 		//DEBUG_ERR(("free_mp_xmitframe_cnt:%d\n", pmp_priv->free_mp_xmitframe_cnt));
@@ -2883,7 +2883,7 @@ _func_enter_;
 	if (pxframe !=  NULL)
 		pmp_priv->free_mp_xmitframe_cnt--;
 
-	_exit_critical(&pfree_xmit_queue->lock, &irqL);
+	_exit_critical_bh(&pfree_xmit_queue->lock, &irqL);
 
 _func_exit_;
 
@@ -2905,13 +2905,13 @@ int free_mp_xmitframe(struct xmit_priv *pxmitpriv, struct mp_xmit_frame *pmp_xmi
 
 	list_delete(&pmp_xmitframe->list);
 
-	_enter_critical(&pfree_xmit_queue->lock, &irqL);
+	_enter_critical_bh(&pfree_xmit_queue->lock, &irqL);
 
 	rtw_list_insert_tail(&(pmp_xmitframe->list), get_list_head(pfree_xmit_queue));
 
 	pmp_priv->free_mp_xmitframe_cnt++;
 
-	_exit_critical(&pfree_xmit_queue->lock, &irqL);
+	_exit_critical_bh(&pfree_xmit_queue->lock, &irqL);
 
 exit:
 

@@ -350,7 +350,12 @@ int FirmwareDownload92C(
 	u8		*pFirmwareBuf;
 	u32		FirmwareLen;
 
-	pFirmware = (PRT_FIRMWARE_92C)_rtw_malloc(sizeof(RT_FIRMWARE_92C));
+	#ifdef MEM_ALLOC_REFINE
+	pFirmware = (PRT_FIRMWARE_92C)rtw_zvmalloc(sizeof(RT_FIRMWARE_92C));
+	#else
+	pFirmware = (PRT_FIRMWARE_92C)rtw_zmalloc(sizeof(RT_FIRMWARE_92C));
+	#endif
+	
 	if(!pFirmware)
 	{
 		rtStatus = _FAIL;
@@ -371,10 +376,16 @@ int FirmwareDownload92C(
 		if(IS_VENDOR_UMC_A_CUT(pHalData->VersionID) && !IS_92C_SERIAL(pHalData->VersionID))// UMC , 8188
 		{						
 			pFwImageFileName = R92CFwImageFileName_UMC;
-			FwImage = Rtl819XFwUMCImageArray;
-			FwImageLen = UMCImgArrayLength;
-			DBG_871X(" ===> FirmwareDownload91C() fw:Rtl819XFwImageArray_UMC\n");
-				
+			FwImage = Rtl819XFwUMCACutImageArray;
+			FwImageLen = UMCACutImgArrayLength;
+			DBG_871X(" ===> FirmwareDownload91C() fw:Rtl819XFwImageArray_UMC_ACUT\n");
+		}
+		else if(IS_VENDOR_UMC_B_CUT(pHalData->VersionID) && !IS_92C_SERIAL(pHalData->VersionID))// UMC , 8188
+		{						
+			pFwImageFileName = R92CFwImageFileName_UMC;
+			FwImage = Rtl819XFwUMCBCutImageArray;
+			FwImageLen = UMCBCutImgArrayLength;
+			DBG_871X(" ===> FirmwareDownload91C() fw:Rtl819XFwImageArray_UMC_BCUT\n");
 		}
 		else
 		{
@@ -407,7 +418,13 @@ int FirmwareDownload92C(
 				DBG_871X("Firmware size exceed 0x%X. Check it.\n", FW_8192C_SIZE);
 				goto Exit;
 			}
+
+			#ifdef CONFIG_EMBEDDED_FWIMG
+			pFirmware->szFwBuffer=FwImage;
+			#else
 			_rtw_memcpy(pFirmware->szFwBuffer, FwImage, FwImageLen);
+			#endif
+			
 			pFirmware->ulFwLength = FwImageLen;
 			break;
 	}
@@ -457,8 +474,13 @@ int FirmwareDownload92C(
 
 Exit:
 
-	if(pFirmware)
-		_rtw_mfree((u8*)pFirmware, sizeof(RT_FIRMWARE_92C));
+	if(pFirmware) {
+		#ifdef MEM_ALLOC_REFINE
+		rtw_vmfree((u8*)pFirmware, sizeof(RT_FIRMWARE_92C));
+		#else
+		rtw_mfree((u8*)pFirmware, sizeof(RT_FIRMWARE_92C));
+		#endif
+	}
 
 	//RT_TRACE(COMP_INIT, DBG_LOUD, (" <=== FirmwareDownload91C()\n"));
 	return rtStatus;
@@ -536,6 +558,7 @@ ReadChannelPlan(
 	{
 		pmlmepriv->ChannelPlan = (RT_CHANNEL_DOMAIN)pregistrypriv->channel_plan;
 	}
+	MSG_8192C("RT_ChannelPlan: (0x%02x:0x%02x)\n", channelPlan,pmlmepriv->ChannelPlan);
 
 #if 0 //todo:
 	switch(pMgntInfo->ChannelPlan)
@@ -554,7 +577,7 @@ ReadChannelPlan(
 	//RT_TRACE(COMP_INIT, DBG_LOUD, ("RegChannelPlan(%d) EEPROMChannelPlan(%ld)", pMgntInfo->RegChannelPlan, (u4Byte)channelPlan));
 	//RT_TRACE(COMP_INIT, DBG_LOUD, ("ChannelPlan = %d\n" , pMgntInfo->ChannelPlan));
 
-	MSG_8192C("RT_ChannelPlan: 0x%02x\n", pmlmepriv->ChannelPlan);
+	//MSG_8192C("RT_ChannelPlan: 0x%02x\n", pmlmepriv->ChannelPlan);
 
 }
 
@@ -741,42 +764,27 @@ ReadChipVersion(
 	u8				ChipVersion=0;	
 	
 	value32 = rtw_read32(Adapter, REG_SYS_CFG);
-#if 0
-	if(value32 & TRP_VAUX_EN){		
-		//Test chip
-		switch(((value32 & CHIP_VER_RTL_MASK) >> CHIP_VER_RTL_SHIFT))
-		{
-			case 0: //8191C
-				version = VERSION_TEST_CHIP_91C;
-				break;
-			case 1: //8188C
-				version = VERSION_TEST_CHIP_88C;
-				break;
-			default:
-				// TODO: set default to 1T1R?
-				RT_ASSERT(FALSE,("Chip Version can't be recognized.\n"));
-				break;
-		}
-		
-	}
-	else{		
-		//Normal chip
-		version = VERSION_8192C_NORMAL_CHIP;
 
-	}
-#else
 	if (value32 & TRP_VAUX_EN){		
 		version = (value32 & TYPE_ID) ?VERSION_TEST_CHIP_92C :VERSION_TEST_CHIP_88C;		
 	}
-	else{
-		// Normal mass production chip.
+	else{		
 		ChipVersion = NORMAL_CHIP;
 		ChipVersion |= ((value32 & TYPE_ID) ? CHIP_92C : 0);
 		ChipVersion |= ((value32 & VENDOR_ID) ? CHIP_VENDOR_UMC : 0);
 		ChipVersion |= ((value32 & BT_FUNC) ? CHIP_8723: 0); // RTL8723 with BT function.
+#if 0
 		if(IS_VENDOR_UMC(ChipVersion))
 			ChipVersion |= ((value32 & CHIP_VER_RTL_MASK) ? CHIP_VENDOR_UMC_B_CUT : 0);
-
+#else
+		// 88/92C UMC B-cut IC will not set the SYS_CFG[19] to UMC
+		// because we do not want the custmor to know. by tynli. 2011.01.17.		
+		if((!IS_VENDOR_UMC(ChipVersion) )&& (value32 & CHIP_VER_RTL_MASK))
+		{
+			ChipVersion |= CHIP_VENDOR_UMC;
+			ChipVersion |= CHIP_VENDOR_UMC_B_CUT;
+		}
+#endif
 		if(IS_92C_SERIAL(ChipVersion))
 		{
 			value32 = rtw_read32(Adapter, REG_HPON_FSM);
@@ -789,7 +797,7 @@ ReadChipVersion(
 		}
 		version = (VERSION_8192C)ChipVersion;
 	}
-#endif
+
 
 	switch(version)
 	{
@@ -1288,10 +1296,10 @@ static void _ReadHWPDSelection(IN PADAPTER Adapter,IN u8*PROMContent,IN	u8	Autol
 		Adapter->pwrctrlpriv.bSupportRemoteWakeup = _FALSE;
 	}
 	else	{
-		if(SUPPORT_HW_RADIO_DETECT(Adapter))
+		//if(SUPPORT_HW_RADIO_DETECT(Adapter))
 			Adapter->pwrctrlpriv.bHWPwrPindetect = Adapter->registrypriv.hwpwrp_detect;
-		else
-			Adapter->pwrctrlpriv.bHWPwrPindetect = _FALSE;//dongle not support new
+		//else
+			//Adapter->pwrctrlpriv.bHWPwrPindetect = _FALSE;//dongle not support new
 			
 			
 		//hw power down mode selection , 0:rf-off / 1:power down
@@ -1302,13 +1310,17 @@ static void _ReadHWPDSelection(IN PADAPTER Adapter,IN u8*PROMContent,IN	u8	Autol
 			Adapter->pwrctrlpriv.bHWPowerdown = Adapter->registrypriv.hwpdn_mode;
 				
 		// decide hw if support remote wakeup function
-		// if hw supported, 8051 (SIE) will generate WeakUP frame when autoresume
+		// if hw supported, 8051 (SIE) will generate WeakUP signal( D+/D- toggle) when autoresume
 		Adapter->pwrctrlpriv.bSupportRemoteWakeup = (PROMContent[EEPROM_TEST_USB_OPT] & BIT1)?_TRUE :_FALSE;
 
 		//if(SUPPORT_HW_RADIO_DETECT(Adapter))	
 			//Adapter->registrypriv.usbss_enable = Adapter->pwrctrlpriv.bSupportRemoteWakeup ;
 		
-		DBG_8192C("%s...bHWPwrPindetect(%d) bSupportRemoteWakeup(%x)\n",__FUNCTION__,Adapter->pwrctrlpriv.bHWPwrPindetect,Adapter->pwrctrlpriv.bSupportRemoteWakeup);
+		DBG_8192C("%s...bHWPwrPindetect(%x)-bHWPowerdown(%x) ,bSupportRemoteWakeup(%x)\n",__FUNCTION__,
+		Adapter->pwrctrlpriv.bHWPwrPindetect,Adapter->pwrctrlpriv.bHWPowerdown ,Adapter->pwrctrlpriv.bSupportRemoteWakeup);
+
+		DBG_8192C("### PS params=>  power_mgnt(%x),usbss_enable(%x) ###\n",Adapter->registrypriv.power_mgnt,Adapter->registrypriv.usbss_enable);
+		
 	}
 	
 }
@@ -1336,7 +1348,8 @@ static void _InitAdapterVariablesByPROM(IN	PADAPTER Adapter)
 	_ReadRFSetting(Adapter, PROMContent, !bAutoload);
 	_ReadHWPDSelection(Adapter, PROMContent, !bAutoload);
 
-	
+	Adapter->bDongle = !(PROMContent[EEPROM_EASY_REPLACEMENT]);
+	DBG_8192C("%s(): REPLACEMENT = %x\n",__FUNCTION__,Adapter->bDongle);	
 }
 
 static void efuse_ReadAllMap(
@@ -1373,6 +1386,166 @@ static void EFUSE_ShadowMapUpdate(
 	
 }// EFUSE_ShadowMapUpdate
 
+
+#define EEPROM_ADDRESS_LEN	6
+
+
+
+static void _EnableEepromPG( PADAPTER Adapter,u8 enable)
+{
+	u8 eeValue,value;
+	eeValue = rtw_read8(Adapter, REG_9346CR);	
+	value = enable ? (eeValue | EEM1) : (eeValue & ~EEM1);	
+	 rtw_write8(Adapter, REG_9346CR,value);		
+}
+//-----------------------------------------------------------------------------
+// Procedure:   RaiseClock
+//
+// Description: This routine raises the EEPOM's clock input (EESK)
+//
+// Arguments:
+//      pValue - Ptr to the EEPROM control register's current value
+//
+// Returns: (none)
+//-----------------------------------------------------------------------------
+static void _RaiseClock(PADAPTER Adapter,u16* pValue)
+{
+	*pValue = *pValue | EESK;
+	rtw_write16(Adapter,REG_9346CR, *pValue);
+}
+
+//-----------------------------------------------------------------------------
+// Procedure:   LowerClock
+//
+// Description: This routine lower's the EEPOM's clock input (EESK)
+//
+// Arguments:
+//      pValue - Ptr to the EEPROM control register's current value
+//
+// Returns: (none)
+//-----------------------------------------------------------------------------
+static void _LowerClock(PADAPTER Adapter,u16* pValue)
+{
+	*pValue = (*pValue & ~EESK);
+	rtw_write16(Adapter,REG_9346CR, *pValue);
+}
+
+static void _ShiftOutBits(PADAPTER Adapter,u16 data, u16 count)
+{
+	unsigned short mask;
+	unsigned short value = rtw_read16(Adapter,REG_9346CR);
+
+	mask = 0x01 << (count - 1);
+
+	value &= ~(EEDO | EEDI);
+
+	do
+	{
+		value &= ~EEDI;
+		if(data & mask){
+		    value |= EEDI;
+		}
+		
+		rtw_write16(Adapter,REG_9346CR, value);
+		_RaiseClock(Adapter,&value);
+		_LowerClock(Adapter,&value);
+		mask = mask >> 1;
+	} while(mask);
+
+	value&= ~EEDI;
+
+	rtw_write16(Adapter,REG_9346CR, value);
+	
+}
+static void _EEpromCleanup(PADAPTER Adapter)
+{
+	unsigned short value = rtw_read16(Adapter,REG_9346CR);
+
+	value &= ~(EECS | EEDI);
+	rtw_write16(Adapter,REG_9346CR, value);
+
+	_RaiseClock(Adapter,&value);
+	_LowerClock(Adapter,&value);
+}
+//-----------------------------------------------------------------------------
+// Procedure:   ShiftInBits
+//
+// Description: This routine shifts data bits in from the EEPROM.
+//
+// Arguments:
+//
+// Returns:
+//      The contents of that particular EEPROM word
+//-----------------------------------------------------------------------------
+
+static u16 _ShiftInBits(PADAPTER Adapter)
+{
+	u16 d = 0;
+	int i;
+	u16 value = rtw_read16(Adapter,REG_9346CR);
+	value &= ~( EEDO | EEDI);
+
+	for(i = 0 ; i < 16 ; i++){
+		d = d << 1;
+		_RaiseClock(Adapter,&value);
+
+		value = rtw_read16(Adapter,REG_9346CR);
+
+		value &= ~(EEDI);
+		if(value & EEDO){
+			d |= 1;
+		}
+		
+		_LowerClock(Adapter,&value);
+	}
+
+	return d;
+}
+
+static u16 _EERead2Byte(PADAPTER Adapter,u32 address)
+{
+	u16 data;
+	u16 value =rtw_read16(Adapter, REG_9346CR);
+
+	value &= ~(EEDI | EEDO | EESK | EEM0);
+	value|= (EEM1 | EECS);
+	rtw_write16(Adapter,REG_9346CR, value);
+	
+	// write the read opcode and register number in that order
+	// The opcode is 3bits in length, reg is 6 bits long
+	_ShiftOutBits(Adapter,EEPROM_READ_OPCODE, 3);
+	_ShiftOutBits(Adapter,address, EEPROM_ADDRESS_LEN);
+
+	// Now read the data (16 bits) in from the selected EEPROM word
+	data = _ShiftInBits(Adapter);
+
+	_EEpromCleanup(Adapter);
+	return data;
+	
+}
+
+static void EEPROM_ShadowMapUpdate( PADAPTER Adapter)
+{
+	
+	u8 *PROMContent = Adapter->eeprompriv.efuse_eeprom_data;
+
+	u32			i;
+	u16 value16;
+	_EnableEepromPG(Adapter,_TRUE);	
+	// Read all Content from EEPROM
+	for(i = 0; i < HWSET_MAX_SIZE; i += 2)
+	{
+		//todo:
+		//value16 = EF2Byte(ReadEEprom(Adapter, (u16) (i>>1)));
+		//*((u16*)(&PROMContent[i])) = value16; 				
+		value16 =  _EERead2Byte(Adapter, (u16) (i>>1));
+		value16  = le16_to_cpu(value16 );
+		*((u16*)(&PROMContent[i])) = value16; 
+		
+	}
+	_EnableEepromPG(Adapter,_FALSE);
+	
+}
 static void _ReadPROMContent(
 	IN PADAPTER 		Adapter
 	)
@@ -1381,7 +1554,7 @@ static void _ReadPROMContent(
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
 	
 	u8			eeValue;
-	u32			i;
+	
 
 	_rtw_memset(pEEPROM->efuse_eeprom_data, 0xff, HWSET_MAX_SIZE);	
 	
@@ -1398,15 +1571,10 @@ static void _ReadPROMContent(
 
 	if(_SUCCESS == pEEPROM->bAutoload)
 	{
+		
 		if (_TRUE == pEEPROM->bBootFromEEPROM)
 		{
-			// Read all Content from EEPROM or EFUSE.
-			for(i = 0; i < HWSET_MAX_SIZE; i += 2)
-			{
-				//todo:
-				//value16 = EF2Byte(ReadEEprom(Adapter, (u16) (i>>1)));
-				//*((u16*)(&PROMContent[i])) = value16; 				
-			}
+			EEPROM_ShadowMapUpdate(Adapter);			
 		}
 		else
 		{
@@ -1474,6 +1642,44 @@ void rtl8192c_ReadChipVersion(
 	pHalData->VersionID = ReadChipVersion(Adapter);
 }
 
+void _ReadSilmComboMode(PADAPTER Adapter)
+{
+	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(Adapter);
+
+	pHalData->SlimComboDbg = _FALSE;	// Default is not debug mode.
+
+	// 2010/11/22 MH We need to enter debug mode for TSMA and UMC A cut
+	if ((Adapter->chip_type == RTL8188C_8192C) && 
+		(pHalData->BoardType == BOARD_USB_COMBO))
+	{			
+		switch (pHalData->VersionID)
+		{
+			case	VERSION_NORMAL_TSMC_CHIP_88C:
+			case	VERSION_NORMAL_TSMC_CHIP_92C:
+			case	VERSION_NORMAL_TSMC_CHIP_92C_1T2R:
+			case	VERSION_NORMAL_UMC_CHIP_88C_A_CUT:
+			case	VERSION_NORMAL_UMC_CHIP_92C_A_CUT:
+			case	VERSION_NORMAL_UMC_CHIP_92C_1T2R_A_CUT:
+				if ((rtw_read8(Adapter, REG_SYS_CFG+3) &0xF0) == 0x20)
+					pHalData->SlimComboDbg = _TRUE;
+				
+				break;
+
+			case	VERSION_NORMAL_UMC_CHIP_88C_B_CUT:
+			case	VERSION_NORMAL_UMC_CHIP_92C_B_CUT:
+			case	VERSION_NORMAL_UMC_CHIP_92C_1T2R_B_CUT:
+				// 2011/02/15 MH UNC-B cut ECO fail, we need to support slim combo debug mode.
+				if ((rtw_read8(Adapter, REG_SYS_CFG+3) &0xF0) == 0x20)
+					pHalData->SlimComboDbg = _TRUE;
+				break;
+				
+			default:
+				break;
+		}		
+		
+	}
+	
+}
 
 int ReadAdapterInfo8192C(PADAPTER	Adapter)
 {
@@ -1487,6 +1693,9 @@ int ReadAdapterInfo8192C(PADAPTER	Adapter)
 	_ReadRFChipType(Adapter);//rf_chip -> _InitRFType()
 	
 	_ReadPROMContent(Adapter);
+
+	// The function must be called after borad_type & IC-Version recognize.
+	_ReadSilmComboMode(Adapter);
 
 	_InitOtherVariable(Adapter);
 #endif

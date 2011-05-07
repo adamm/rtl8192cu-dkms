@@ -23,6 +23,7 @@
 #include <drv_conf.h>
 #include <drv_types.h>
 
+#define TKIP_TIMER_TO 50
 
 typedef u8 NDIS_802_11_PMKID_VALUE[16];
 

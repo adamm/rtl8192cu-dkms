@@ -354,8 +354,10 @@ _func_enter_;
 
 			rtw_disassoc_cmd(padapter);
 
-			if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)
+			if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE){
+				printk("%s...call rtw_indicate_disconnect\n ",__FUNCTION__);
 				rtw_indicate_disconnect(padapter);
+			}
 
 			rtw_free_assoc_resources(padapter);
 
@@ -404,9 +406,12 @@ u8 rtw_set_802_11_ssid(_adapter* padapter, NDIS_802_11_SSID *ssid)
 	
 _func_enter_;
 	
-	RT_TRACE(_module_rtl871x_ioctl_set_c_, _drv_notice_,
+	//RT_TRACE(_module_rtl871x_ioctl_set_c_, _drv_notice_,
+	DBG_871X
 		 ("+rtw_set_802_11_ssid: ssid=[%s] fw_state=0x%08x\n",
-		  ssid->Ssid, get_fwstate(pmlmepriv)));
+		  ssid->Ssid, get_fwstate(pmlmepriv))
+		//  )
+		  ;
 
 	if(padapter->hw_init_completed==_FALSE){
 		RT_TRACE(_module_rtl871x_ioctl_set_c_, _drv_err_,
@@ -442,8 +447,10 @@ _func_enter_;
 					//if in WIFI_ADHOC_MASTER_STATE | WIFI_ADHOC_STATE, create bss or rejoin again
 					rtw_disassoc_cmd(padapter);
 
-					if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)
+					if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE){
+						printk("%s...call rtw_indicate_disconnect\n ",__FUNCTION__);
 						rtw_indicate_disconnect(padapter);
+					}
 						
 					rtw_free_assoc_resources(padapter);
 
@@ -471,8 +478,10 @@ _func_enter_;
 
 			rtw_disassoc_cmd(padapter);
 
-			if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)
+			if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE){				
+				printk("%s...call rtw_indicate_disconnect\n ",__FUNCTION__);
 				rtw_indicate_disconnect(padapter);
+			}
 			
 			rtw_free_assoc_resources(padapter);
 
@@ -573,7 +582,8 @@ _func_enter_;
 
 
 		if((check_fwstate(pmlmepriv, _FW_LINKED)== _TRUE) || (*pold_state==Ndis802_11Infrastructure) ||(*pold_state==Ndis802_11IBSS))
-		{		
+		{	
+			printk("%s...call rtw_indicate_disconnect\n ",__FUNCTION__);
 			rtw_indicate_disconnect(padapter); //will clr Linked_state; before this function, we must have chked whether  issue dis-assoc_cmd or not
 		}	
 	
@@ -584,6 +594,7 @@ _func_enter_;
 		}	
 		
 		*pold_state = networktype;
+		//printk("%s , cur_network->network.InfrastructureMode = %d \n",__FUNCTION__,cur_network->network.InfrastructureMode);
 
 				// clear WIFI_STATION_STATE; WIFI_AP_STATE; WIFI_ADHOC_STATE; WIFI_ADHOC_MASTER_STATE
 		//pmlmepriv->fw_state &= 0xffffff87;		
@@ -634,8 +645,9 @@ _func_enter_;
 
 	if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)
 	{
+		
 		RT_TRACE(_module_rtl871x_ioctl_set_c_,_drv_info_,("MgntActSet_802_11_DISASSOCIATE: rtw_indicate_disconnect\n"));
-
+		printk("%s...call rtw_indicate_disconnect\n ",__FUNCTION__);
 		rtw_disassoc_cmd(padapter);		
 		rtw_indicate_disconnect(padapter);
 		rtw_free_assoc_resources(padapter);			
@@ -1151,8 +1163,11 @@ _func_enter_;
 			if(encryptionalgo== _TKIP_)
 			{
 				padapter->securitypriv.busetkipkey=_FALSE;
+				#ifdef DBG_SHOW_USETKIPKEY
+				DBG_871X("%s:%d adapter->securitypriv.busetkipkey:%d\n", __FUNCTION__, __LINE__ ,padapter->securitypriv.busetkipkey);
+				#endif
 				
-				_set_timer(&padapter->securitypriv.tkip_timer, 50);
+				_set_timer(&padapter->securitypriv.tkip_timer, TKIP_TIMER_TO);
 				
 				RT_TRACE(_module_rtl871x_ioctl_set_c_,_drv_err_,("\n ==========_set_timer\n"));
 				

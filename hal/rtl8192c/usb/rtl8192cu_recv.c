@@ -56,16 +56,16 @@ int	rtw_init_recv_priv(struct recv_priv *precvpriv, _adapter *padapter)
 	_rtw_init_queue(&precvpriv->free_recv_buf_queue);
 
 
-	precvpriv->pallocated_recv_buf = _rtw_malloc(NR_RECVBUFF *sizeof(struct recv_buf) + 4);
+	precvpriv->pallocated_recv_buf = rtw_zmalloc(NR_RECVBUFF *sizeof(struct recv_buf) + 4);
 	if(precvpriv->pallocated_recv_buf==NULL){
 		res= _FAIL;
 		RT_TRACE(_module_rtl871x_recv_c_,_drv_err_,("alloc recv_buf fail!\n"));
 		goto exit;
 	}
-	_rtw_memset(precvpriv->pallocated_recv_buf, 0, NR_RECVBUFF *sizeof(struct recv_buf) + 4);
+//	_rtw_memset(precvpriv->pallocated_recv_buf, 0, NR_RECVBUFF *sizeof(struct recv_buf) + 4);
 
 	precvpriv->precv_buf = precvpriv->pallocated_recv_buf + 4 -
-							((uint) (precvpriv->pallocated_recv_buf) &(4-1));
+							((SIZE_PTR) (precvpriv->pallocated_recv_buf) &(4-1));
 
 
 	precvbuf = (struct recv_buf*)precvpriv->precv_buf;
@@ -86,14 +86,17 @@ int	rtw_init_recv_priv(struct recv_priv *precvpriv, _adapter *padapter)
 
 		rtw_list_insert_tail(&precvbuf->list, &(precvpriv->free_recv_buf_queue.queue));
 
+		#ifdef DBG_RECV_BUF
+		precvbuf->no=i;
+		#endif
 		precvbuf++;
 
 	}
 #ifdef CONFIG_SDIO_HCI
 
-	precvpriv->recvbuf_drop= (struct recv_buf*)_rtw_malloc(sizeof(struct recv_buf));
+	precvpriv->recvbuf_drop= (struct recv_buf*)rtw_zmalloc(sizeof(struct recv_buf));
 #ifdef PLATFORM_LINUX
-	((struct recv_buf *)precvpriv->recvbuf_drop)->pallocated_buf = _rtw_malloc(MAX_RECVBUF_SZ+4);
+	((struct recv_buf *)precvpriv->recvbuf_drop)->pallocated_buf = rtw_zmalloc(MAX_RECVBUF_SZ+4);
 	if(((struct recv_buf *)precvpriv->recvbuf_drop)->pallocated_buf == NULL){
 		res = _FAIL;
 	}
@@ -129,8 +132,8 @@ int	rtw_init_recv_priv(struct recv_priv *precvpriv, _adapter *padapter)
 #ifdef CONFIG_PREALLOC_RECV_SKB
 	{
 		int i;
-		u32 tmpaddr=0;
-		int alignment=0;
+		SIZE_PTR tmpaddr=0;
+		SIZE_PTR alignment=0;
 		struct sk_buff *pskb=NULL;
 
 		skb_queue_head_init(&precvpriv->free_recv_skb_queue);
@@ -148,7 +151,7 @@ int	rtw_init_recv_priv(struct recv_priv *precvpriv, _adapter *padapter)
 			{
 				pskb->dev = padapter->pnetdev;
 
-				tmpaddr = (u32)pskb->data;
+				tmpaddr = (SIZE_PTR)pskb->data;
 				alignment = tmpaddr & (RECVBUFF_ALIGN_SZ-1);
 				skb_reserve(pskb, (RECVBUFF_ALIGN_SZ - alignment));
 
@@ -185,7 +188,7 @@ void rtw_free_recv_priv (struct recv_priv *precvpriv)
 	}
 
 	if(precvpriv->pallocated_recv_buf)
-		_rtw_mfree(precvpriv->pallocated_recv_buf, NR_RECVBUFF *sizeof(struct recv_buf) + 4);
+		rtw_mfree(precvpriv->pallocated_recv_buf, NR_RECVBUFF *sizeof(struct recv_buf) + 4);
 
 
 #ifdef PLATFORM_LINUX
@@ -236,7 +239,7 @@ void rtl8192cu_update_recvframe_attrib_from_recvstat(union recv_frame *precvfram
 	u8 physt, qos, shift, icverr, htc,crcerr;
 	u32 *pphy_info;
 	u16 drvinfo_sz=0;
-	struct rx_pkt_attrib *pattrib = &precvframe->u.hdr.attrib;		
+	struct rx_pkt_attrib *pattrib = &precvframe->u.hdr.attrib;	
 	_adapter *padapter = precvframe->u.hdr.adapter;
 
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);
@@ -300,18 +303,18 @@ void rtl8192cu_update_recvframe_attrib_from_recvstat(union recv_frame *precvfram
 	if(pHalData->bDumpRxPkt){
 		printk("### rxdw0=0x%08x #### \n", le32_to_cpu(prxstat->rxdw0));	
 		printk("pkt_len=0x%04x\n",(le32_to_cpu(prxstat->rxdw0)&0x3FFF));
-		printk("drvinfo_sz=%d\n", drvinfo_sz);
-		printk("physt=%d\n", physt);
-		printk("shift=%d\n", shift);
-		printk("qos=%d\n", qos);
-		printk("icverr=%d\n", icverr);
-		printk("htc=%d\n", htc);
-		printk("bdecrypted=%d\n", pattrib->bdecrypted);
-		printk("mcs_rate=%d\n", pattrib->mcs_rate);
-		printk("rxht=%d\n", pattrib->rxht);
+	printk("drvinfo_sz=%d\n", drvinfo_sz);
+	printk("physt=%d\n", physt);
+	printk("shift=%d\n", shift);
+	printk("qos=%d\n", qos);
+	printk("icverr=%d\n", icverr);
+	printk("htc=%d\n", htc);
+	printk("bdecrypted=%d\n", pattrib->bdecrypted);
+	printk("mcs_rate=%d\n", pattrib->mcs_rate);
+	printk("rxht=%d\n", pattrib->rxht);
 	}
 #endif
-	
+
 	//phy_info
 	if(drvinfo_sz && physt)
 	{
@@ -324,7 +327,7 @@ void rtl8192cu_update_recvframe_attrib_from_recvstat(union recv_frame *precvfram
 		bPacketToSelf = bPacketMatchBSSID &&  (_rtw_memcmp(get_da(precvframe->u.hdr.rx_data), myid(&padapter->eeprompriv), ETH_ALEN));
 
 		bPacketBeacon =bPacketMatchBSSID && (GetFrameSubType(precvframe->u.hdr.rx_data) ==  WIFI_BEACON);
-				
+
 		pphy_info=(u32 *)prxstat+1;
 
 		//printk("pphy_info, of0=0x%08x\n", *pphy_info);

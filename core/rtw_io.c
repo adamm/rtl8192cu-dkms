@@ -73,10 +73,12 @@ u8 rtw_read8(_adapter *adapter, u32 addr)
 	struct io_priv *pio_priv = &adapter->iopriv;
 	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
 	u8 (*_read8)(struct intf_hdl *pintfhdl, u32 addr);
+	_irqL irqL;
 	_func_enter_;
 	_read8 = pintfhdl->io_ops._read8;
-	
+	_enter_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	r_val = _read8(pintfhdl, addr);
+	_exit_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_func_exit_;
 	return r_val;
 }
@@ -88,10 +90,12 @@ u16 rtw_read16(_adapter *adapter, u32 addr)
 	struct io_priv *pio_priv = &adapter->iopriv;
 	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
 	u16 	(*_read16)(struct intf_hdl *pintfhdl, u32 addr);
+	_irqL irqL;
 	_func_enter_;
 	_read16 = pintfhdl->io_ops._read16;
-
+	_enter_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	r_val = _read16(pintfhdl, addr);
+	_exit_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_func_exit_;
 	return r_val;
 }
@@ -103,10 +107,12 @@ u32 rtw_read32(_adapter *adapter, u32 addr)
 	struct io_priv *pio_priv = &adapter->iopriv;
 	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
 	u32 	(*_read32)(struct intf_hdl *pintfhdl, u32 addr);
+	_irqL irqL;
 	_func_enter_;
 	_read32 = pintfhdl->io_ops._read32;
-	
+	_enter_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	r_val = _read32(pintfhdl, addr);
+	_exit_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_func_exit_;
 	return r_val;	
 
@@ -118,10 +124,12 @@ void rtw_write8(_adapter *adapter, u32 addr, u8 val)
 	struct io_priv *pio_priv = &adapter->iopriv;
 	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
 	void (*_write8)(struct intf_hdl *pintfhdl, u32 addr, u8 val);
+	_irqL irqL;
 	_func_enter_;
 	_write8 = pintfhdl->io_ops._write8;
-	
+	_enter_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_write8(pintfhdl, addr, val);
+	_exit_critical_mutex(&pintfhdl->io_mutex, &irqL);
 }
 void rtw_write16(_adapter *adapter, u32 addr, u16 val)
 {
@@ -129,10 +137,12 @@ void rtw_write16(_adapter *adapter, u32 addr, u16 val)
 	struct io_priv *pio_priv = &adapter->iopriv;
 	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
 	void (*_write16)(struct intf_hdl *pintfhdl, u32 addr, u16 val);
+	_irqL irqL;
 	_func_enter_;
 	_write16 = pintfhdl->io_ops._write16;
-	
+	_enter_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_write16(pintfhdl, addr, val);
+	_exit_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_func_exit_;
 
 }
@@ -142,10 +152,12 @@ void rtw_write32(_adapter *adapter, u32 addr, u32 val)
 	struct io_priv *pio_priv = &adapter->iopriv;
 	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
 	void (*_write32)(struct intf_hdl *pintfhdl, u32 addr, u32 val);
+	_irqL irqL;
 	_func_enter_;
 	_write32 = pintfhdl->io_ops._write32;
-	
+	_enter_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_write32(pintfhdl, addr, val);	
+	_exit_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_func_exit_;
 
 }
@@ -155,10 +167,12 @@ void writeN(_adapter *adapter, u32 addr ,u32 length , u8 *pdata)
 	struct io_priv *pio_priv = &adapter->iopriv;
         struct	intf_hdl	*pintfhdl = (struct intf_hdl*)(&(pio_priv->intf));
 	void (*_writeN)(struct intf_hdl *pintfhdl, u32 addr,u32 length, u8 *pdata);
+	_irqL irqL;
 	_func_enter_;
 	_writeN = pintfhdl->io_ops._writeN;
-	
+	_enter_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_writeN(pintfhdl, addr,length,pdata);	
+	_exit_critical_mutex(&pintfhdl->io_mutex, &irqL);
 	_func_exit_;
 
 }
@@ -300,7 +314,7 @@ void write_port_cancel(_adapter *adapter)
 	struct io_priv *pio_priv = &adapter->iopriv;
 	struct intf_hdl *pintfhdl = &(pio_priv->intf);
 	
-	_write_port_cancel = pintfhdl->io_ops._read_port_cancel;
+	_write_port_cancel = pintfhdl->io_ops._write_port_cancel;
 
 	if(_write_port_cancel)
 		_write_port_cancel(pintfhdl);	
@@ -355,6 +369,7 @@ int init_io_priv(_adapter *padapter)
 	pintf->padapter = padapter;
 	pintf->pintf_dev = &padapter->dvobjpriv;
 	
+	_rtw_mutex_init(&pintf->io_mutex ); 
 	
 #ifdef CONFIG_SDIO_HCI	
 	set_intf_ops = &sdio_set_intf_ops;	
@@ -365,7 +380,7 @@ int init_io_priv(_adapter *padapter)
 
 	if(padapter->chip_type == RTL8188C_8192C)
 	{
-#ifdef CONFIG_RTL8192C
+#ifdef CONFIG_RTL8192C		
 		set_intf_ops = &rtl8192cu_set_intf_ops;
 #endif
 	}

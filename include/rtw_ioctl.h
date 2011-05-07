@@ -260,5 +260,11 @@ extern	NDIS_STATUS 	drv_set_info(
 	OUT	u32*			BytesNeeded
 	);
 
+struct wowlan_ioctl_param{
+	unsigned int subcode;
+	unsigned int len;
+	unsigned char data[0];
+};
+
 #endif // #ifndef __INC_CEINFO_
 

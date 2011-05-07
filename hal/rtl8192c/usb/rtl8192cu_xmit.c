@@ -27,6 +27,9 @@
 #include <circ_buf.h>
 #include <usb_ops.h>
 
+extern uint eap_data_rate;
+
+
 #if defined (PLATFORM_LINUX) && defined (PLATFORM_WINDOWS)
 #error "Shall be Linux or Windows, but not both!\n"
 #endif
@@ -365,7 +368,13 @@ static void _update_txdesc(struct xmit_frame *pxmitframe, u8 *pmem, int sz)
 			// This will maybe make the handshake smooth.
 
 			ptxdesc->txdw1 |= cpu_to_le32(BIT(6));//AGG BK
+			//if(eap_data_rate==1000)//not use rate
+			//{	
+			//} else {
 		   	ptxdesc->txdw4 |= cpu_to_le32(BIT(8));//driver uses rate
+				ptxdesc->txdw5 |= cpu_to_le32(0x0000000b);//DataRate - 54M
+				//ptxdesc->txdw5 |= cpu_to_le32(eap_data_rate);//DataRate
+			//}
 		}
 
 
@@ -552,8 +561,13 @@ s32 rtw_update_txdesc(struct xmit_frame *pxmitframe, u32 *pmem, s32 sz)
 			// This will maybe make the handshake smooth.
 
 			ptxdesc->txdw1 |= cpu_to_le32(BIT(6));//AGG BK
-			
+			if(eap_data_rate==1000)//not use rate
+			{	
+			} else {
+				//printk("###############eap_data_rate:%u\n",eap_data_rate);
 		   	ptxdesc->txdw4 |= cpu_to_le32(BIT(8));//driver uses rate
+				ptxdesc->txdw5 |= cpu_to_le32(eap_data_rate);//DataRate
+			}
 
 		}
 		
@@ -705,7 +719,7 @@ s32 rtw_xmitframe_complete(_adapter *padapter, struct xmit_priv *pxmitpriv, stru
 	do {
 		rtw_free_xmitframe_ex(pxmitpriv, pxmitframe);
 			
-		pxmitframe = rtw_dequeue_xframe(pxmitpriv, pxmitpriv->hwxmits, pxmitpriv->hwxmit_entry);
+		pxmitframe = rtw_dequeue_xframe(pxmitpriv, pxmitbuf->flags);
 		if (pxmitframe == NULL) {
 			// no more xmit frame, release xmit buffer
 			rtw_free_xmitbuf(pxmitpriv, pxmitbuf);
@@ -891,6 +905,7 @@ s32 rtw_xmitframe_complete(_adapter *padapter, struct xmit_priv *pxmitpriv, stru
 			bulkPtr = ((pbuf / bulkSize) + 1) * bulkSize;
 		}
 	}
+	
 	if (_rtw_queue_empty(&ptxservq->sta_pending) == _TRUE)
 		list_delete(&ptxservq->tx_pending);
 
@@ -907,7 +922,7 @@ s32 rtw_xmitframe_complete(_adapter *padapter, struct xmit_priv *pxmitpriv, stru
 
 	//3 4. write xmit buffer to USB FIFO
 	ff_hwaddr = rtw_get_ff_hwaddr(pfirstframe);
-
+	//printk("===>%s agg_num(%d) ...\n",__FUNCTION__,pfirstframe->agg_num);
 	// xmit address == ((xmit_frame*)pxmitbuf->priv_data)->buf_addr
 	rtw_write_port(padapter, ff_hwaddr, pbuf_tail, (u8*)pxmitbuf);
 
@@ -926,15 +941,10 @@ s32 rtw_xmitframe_complete(_adapter *padapter, struct xmit_priv *pxmitpriv, stru
 #else
 
 s32 rtw_xmitframe_complete(_adapter *padapter, struct xmit_priv *pxmitpriv, struct xmit_buf *pxmitbuf)
-{		
-
-	struct hw_xmit *phwxmits;
-	sint hwentry;
+{
 	struct xmit_frame *pxmitframe=NULL;	
 	int res=_SUCCESS, xcnt = 0;
 
-	phwxmits = pxmitpriv->hwxmits;
-	hwentry = pxmitpriv->hwxmit_entry;
 
 	RT_TRACE(_module_rtl871x_xmit_c_,_drv_info_,("rtw_xmitframe_complete()\n"));
 
@@ -950,7 +960,7 @@ s32 rtw_xmitframe_complete(_adapter *padapter, struct xmit_priv *pxmitpriv, stru
 
 	do
 	{		
-		pxmitframe =  rtw_dequeue_xframe(pxmitpriv, phwxmits, hwentry);
+		pxmitframe =  rtw_dequeue_xframe(pxmitpriv, pxmitbuf->flags);
 		
 		if(pxmitframe)
 		{
@@ -1064,7 +1074,7 @@ void rtw_dump_xframe(_adapter *padapter, struct xmit_frame *pxmitframe)
 
 		mem_addr += w_sz;
 
-		mem_addr = (u8 *)RND4(((uint)(mem_addr)));
+		mem_addr = (u8 *)RND4(((SIZE_PTR)(mem_addr)));
 
 	}
 	

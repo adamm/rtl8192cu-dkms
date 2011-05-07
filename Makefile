@@ -9,6 +9,8 @@ EXTRA_CFLAGS += -Wno-unused-variable -Wno-unused-value -Wno-unused-label -Wno-un
 EXTRA_CFLAGS += -Wno-unused -Wno-unused-function
 EXTRA_CFLAGS += -I$(src)/include
 
+CONFIG_AUTOCFG_CP		=	n
+
 CONFIG_RTL8712			=	n
 CONFIG_RTL8192C			=       y
 
@@ -17,6 +19,9 @@ CONFIG_SDIO_HCI			= 	n
 CONFIG_MP_INCLUDED		=	n
 CONFIG_POWER_SAVING			=	n
 CONFIG_USB_AUTOSUSPEND			=	n
+CONFIG_HW_PWRP_DETECTION		=	n
+CONFIG_WIFI_TEST						=	n
+CONFIG_RTL8192CU_REDEFINE_1X1 =n
 
 CONFIG_PLATFORM_I386_PC		=	y
 CONFIG_PLATFORM_ANDROID_X86	=	n
@@ -29,8 +34,16 @@ CONFIG_PLATFORM_MIPS_AR9132	=	n
 CONFIG_PLATFORM_MT53XX		=	n
 CONFIG_PLATFORM_RTK_DMP		=	n
 CONFIG_PLATFORM_ARM_TCC8900	=	n
+CONFIG_PLATFORM_ARM_MX51_241H		=	n
+CONFIG_PLATFORM_ACTIONS_ATJ227X = n
+CONFIG_PLATFORM_TI_DM365	=	n
+CONFIG_PLATFORM_RK2818		=	n
+CONFIG_PLATFORM_MIPS_JZ4760	=	n
+
 
 CONFIG_DRVEXT_MODULE	=	n
+
+export TopDIR ?= $(shell pwd)
 
 
 ifeq ($(CONFIG_RTL8712), y)
@@ -54,6 +67,7 @@ ifeq ($(CONFIG_SDIO_HCI), y)
 MODULE_NAME = 8192cs
 endif
 ifeq ($(CONFIG_USB_HCI), y)
+DRIVER_NAME = 8192cu
 MODULE_NAME = 8192cu
 endif
 
@@ -78,6 +92,10 @@ endif
 
 ifeq ($(CONFIG_USB_HCI), y)
  
+ifeq ($(CONFIG_AUTOCFG_CP), y)
+$(shell cp $(TopDIR)/autoconf_$(RTL871X)_usb_linux.h $(TopDIR)/include/autoconf.h)
+endif
+
 #ifeq ($(CONFIG_BEST_BATTERYLIFE), y)
 #EXTRA_CFLAGS += -DCONFIG_BEST_BATTERYLIFE
 #endif
@@ -89,6 +107,18 @@ endif
 ifeq ($(CONFIG_USB_AUTOSUSPEND), y)
 EXTRA_CFLAGS += -DCONFIG_USB_AUTOSUSPEND
 endif
+
+ifeq ($(CONFIG_HW_PWRP_DETECTION), y)
+EXTRA_CFLAGS += -DCONFIG_HW_PWRP_DETECTION
+endif
+
+ifeq ($(CONFIG_WIFI_TEST), y)
+EXTRA_CFLAGS += -DCONFIG_WIFI_TEST
+endif
+
+ifeq ($(CONFIG_RTL8192CU_REDEFINE_1X1), y)
+EXTRA_CFLAGS += -DRTL8192C_RECONFIG_TO_1T1R
+endif 
 
 ifeq ($(CONFIG_PLATFORM_I386_PC), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
@@ -195,7 +225,45 @@ CROSS_COMPILE ?= /usr/src/telechip/SDK_0127_20101006/prebuilt/linux-x86/toolchai
 KSRC ?= /usr/src/telechip/SDK_0127_20101006/kernel
 endif
 
+ifeq ($(CONFIG_PLATFORM_ARM_MX51_241H), y)
+EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_WISTRON_PLATFORM
+ARCH := arm
+CROSS_COMPILE := /opt/freescale/usr/local/gcc-4.1.2-glibc-2.5-nptl-3/arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-
+KVER  := 2.6.31
+KSRC ?= /lib/modules/2.6.31-770-g0e46b52/source
+endif
  
+ifeq ($(CONFIG_PLATFORM_ACTIONS_ATJ227X), y)
+EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_ACTIONS_ATJ227X
+ARCH := mips
+CROSS_COMPILE := /home/cnsd4/project/actions/tools-2.6.27/bin/mipsel-linux-gnu-
+KVER  := 2.6.27
+KSRC := /home/cnsd4/project/actions/linux-2.6.27.28
+endif
+
+ifeq ($(CONFIG_PLATFORM_TI_DM365), y)
+EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_TI_DM365
+ARCH := arm
+CROSS_COMPILE := /home/cnsd4/Appro/mv_pro_5.0/montavista/pro/devkit/arm/v5t_le/bin/arm_v5t_le-
+KVER  := 2.6.18
+KSRC := /home/cnsd4/Appro/mv_pro_5.0/montavista/pro/devkit/lsp/ti-davinci/linux-dm365
+endif
+
+ifeq ($(CONFIG_PLATFORM_RK2818), y)
+EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_ANDROID
+ARCH := arm
+CROSS_COMPILE := /usr/src/release_fae_version/toolchain/arm-eabi-4.4.0/bin/arm-eabi-
+KSRC := /usr/src/release_fae_version/kernel25_A7_281x
+MODULE_NAME := wlan
+endif
+
+ifeq ($(CONFIG_PLATFORM_MIPS_JZ4760), y)
+EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_ANDROID -DCONFIG_MINIMAL_MEMORY_USAGE
+ARCH ?= mips
+CROSS_COMPILE ?= /mnt/sdb5/Ingenic/Umido/mips-4.3/bin/mips-linux-gnu-
+KSRC ?= /mnt/sdb5/Ingenic/Umido/kernel
+endif
+
 _OS_INTFS_FILES :=	os_dep/osdep_service.o \
 			os_dep/linux/os_intfs.o \
 			os_dep/linux/usb_intf.o \
@@ -214,8 +282,8 @@ _HAL_INTFS_FILES :=	hal/hal_init.o \
 			hal/$(RTL871X)/usb/usb_ops_linux.o \
 			hal/$(RTL871X)/usb/usb_halinit.o \
 			hal/$(RTL871X)/usb/Hal8192CUHWImg.o \
-			hal/$(RTL871X)/usb/rtl$(MODULE_NAME)_xmit.o \
-			hal/$(RTL871X)/usb/rtl$(MODULE_NAME)_recv.o \
+			hal/$(RTL871X)/usb/rtl$(DRIVER_NAME)_xmit.o \
+			hal/$(RTL871X)/usb/rtl$(DRIVER_NAME)_recv.o \
 			hal/$(RTL871X)/usb/$(RTL871X)_cmd.o \
 		
 endif
@@ -241,8 +309,8 @@ rtk_core :=	core/rtw_cmd.o \
 		core/rtw_xmit.o \
 
 
-$(MODULE_NAME)-y += $(rtk_core)
-									
+$(MODULE_NAME)-y += $(rtk_core)							
+								
 $(MODULE_NAME)-y += core/efuse/rtl8712_efuse.o
 
 $(MODULE_NAME)-y += core/led/$(RTL871X)_led.o

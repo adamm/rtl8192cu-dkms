@@ -90,6 +90,9 @@ void antenna_select_wk_hdl(_adapter *padapter, u8 *pbuf, int antenna);
 u8 antenna_select_cmd(_adapter*padapter, u8 antenna, u8 enqueue);
 #endif
 
+#ifdef SILENT_RESET_FOR_SPECIFIC_PLATFOM
+u8 usb_io_chk_cmd(_adapter*padapter);
+#endif
 // host message to firmware cmd
 u8 set_rssi_cmd(_adapter*padapter, u8 *param);
 u8 set_raid_cmd(_adapter*padapter, u32 mask, u8 arg);

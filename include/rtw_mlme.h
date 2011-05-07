@@ -33,6 +33,9 @@
 
 #define 	SCANNING_TIMEOUT 	6000
 
+#define	SCAN_INTERVAL	(30) // unit:2sec, 30*2=60sec
+
+
 #ifdef PALTFORM_OS_WINCE
 #define	SCANQUEUE_LIFETIME 12000000 // unit:us
 #else
@@ -147,6 +150,15 @@ struct mlme_priv {
 
 #ifdef CONFIG_80211N_HT
 
+	/* Number of non-HT AP/stations */
+	int num_sta_no_ht;
+
+	/* Number of HT AP/stations 20 MHz */
+	//int num_sta_ht_20mhz; 
+
+
+	int num_FortyMHzIntolerant;
+
 	struct ht_priv	htpriv;
 
 #endif
@@ -155,7 +167,7 @@ struct mlme_priv {
  
 	u8	ChannelPlan;
  
-	u8 	passive_mode; // active: 1, passive: 0
+	u8 	scan_mode; // active: 1, passive: 0
  
 };
 
@@ -269,46 +281,46 @@ __inline static void clr_fwstate(struct mlme_priv *pmlmepriv, sint state)
 {
 	_irqL irqL;
 
-	_enter_critical(&pmlmepriv->lock, &irqL);
+	_enter_critical_bh(&pmlmepriv->lock, &irqL);
 	if (check_fwstate(pmlmepriv, state) == _TRUE)
 		pmlmepriv->fw_state ^= state;
-	_exit_critical(&pmlmepriv->lock, &irqL);
+	_exit_critical_bh(&pmlmepriv->lock, &irqL);
 }
 
 __inline static void clr_fwstate_ex(struct mlme_priv *pmlmepriv, sint state)
 {
 	_irqL irqL;
 
-	_enter_critical(&pmlmepriv->lock, &irqL);
+	_enter_critical_bh(&pmlmepriv->lock, &irqL);
 	_clr_fwstate_(pmlmepriv, state);
-	_exit_critical(&pmlmepriv->lock, &irqL);
+	_exit_critical_bh(&pmlmepriv->lock, &irqL);
 }
 
 __inline static void up_scanned_network(struct mlme_priv *pmlmepriv)
 {
 	_irqL irqL;
 
-	_enter_critical(&pmlmepriv->lock, &irqL);
+	_enter_critical_bh(&pmlmepriv->lock, &irqL);
 	pmlmepriv->num_of_scanned++;
-	_exit_critical(&pmlmepriv->lock, &irqL);
+	_exit_critical_bh(&pmlmepriv->lock, &irqL);
 }
 
 __inline static void down_scanned_network(struct mlme_priv *pmlmepriv)
 {
 	_irqL irqL;
 
-	_enter_critical(&pmlmepriv->lock, &irqL);
+	_enter_critical_bh(&pmlmepriv->lock, &irqL);
 	pmlmepriv->num_of_scanned--;
-	_exit_critical(&pmlmepriv->lock, &irqL);
+	_exit_critical_bh(&pmlmepriv->lock, &irqL);
 }
 
 __inline static void set_scanned_network_val(struct mlme_priv *pmlmepriv, sint val)
 {
 	_irqL irqL;
 
-	_enter_critical(&pmlmepriv->lock, &irqL);
+	_enter_critical_bh(&pmlmepriv->lock, &irqL);
 	pmlmepriv->num_of_scanned = val;
-	_exit_critical(&pmlmepriv->lock, &irqL);
+	_exit_critical_bh(&pmlmepriv->lock, &irqL);
 }
 
 extern u16 rtw_get_capability(WLAN_BSSID_EX *bss);

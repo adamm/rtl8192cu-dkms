@@ -236,7 +236,7 @@ struct dvobj_priv {
 	u8 cmdfifo_cnt;
 	u8 rxfifo_cnt;
 	u16	sdio_hisr;
-	u16	sdio_himr;	
+	u16	sdio_himr;
 #endif//	CONFIG_SDIO_HCI
 
 /*-------- below is for USB INTERFACE --------*/
@@ -282,8 +282,28 @@ struct dvobj_priv {
 	
 };
 
+#ifdef SILENT_RESET_FOR_SPECIFIC_PLATFOM
+#define	WIFI_STATUS_SUCCESS 		0
+#define	USB_VEN_REQ_CMD_FAIL 	BIT0
+#define	USB_READ_PORT_FAIL 		BIT1
+#define	USB_WRITE_PORT_FAIL		BIT2
+#define	WIFI_MAC_TXDMA_ERROR 	BIT3			
+#define   WIFI_TX_HANG				BIT4
+#define	WIFI_RX_HANG				BIT5
+#define 	WIFI_IF_NOT_EXIST			BIT6
+#endif	
 
-struct _ADAPTER{	
+typedef enum _DRIVER_STATE{
+	DRIVER_NORMAL = 0,
+	DRIVER_DISAPPEAR = 1,
+	DRIVER_REPLACE_DONGLE = 2,
+}DRIVER_STATE;
+
+struct _ADAPTER{
+	int	DriverState;// for disable driver using module, use dongle to replace module.
+	int 	chip_type;
+	int	pid;//process id from UI
+	int	bDongle;//build-in module or external dongle
  	
 	struct 	dvobj_priv dvobjpriv;
 	struct	mlme_priv mlmepriv;
@@ -316,11 +336,16 @@ struct _ADAPTER{
 	struct	hostapd_priv	*phostapdpriv;		
 #endif
 
-	int 	chip_type;
-
 	s32	bDriverStopped; 
 	s32	bSurpriseRemoved;
 	s32  bCardDisableWOHSM;
+	_mutex 	silentreset_mutex;
+#ifdef SILENT_RESET_FOR_SPECIFIC_PLATFOM
+	u8 	silent_reset_inprogress;
+	u8	Wifi_Error_Status;
+	unsigned long last_tx_time;
+	unsigned long last_tx_complete_time;
+#endif		
 
 	u32	IsrContent;
 	u32	ImrContent;	
@@ -354,19 +379,15 @@ struct _ADAPTER{
 	int bup;
 	struct net_device_stats stats;
 	struct iw_statistics iwstats;
+	struct proc_dir_entry *dir_dev;// for proc directory
 #endif //end of PLATFORM_LINUX
-
-	int pid;//process id from UI
 
 	int net_closed;
 
 	u8 bFWReady;
 	u8 bReadPortCancel;
-	u8 bWritePortCancel;
-	
-#ifdef CONFIG_PLATFORM_ANDROID
-	u8 bdisassoc_by_assoc;
-#endif
+	u8 bWritePortCancel;	
+
 #ifdef CONFIG_AUTOSUSPEND
 	u8	bDisableAutosuspend;
 #endif

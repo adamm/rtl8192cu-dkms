@@ -21,7 +21,7 @@ typedef NDIS_STATUS _OS_STATUS;
 
 typedef NDIS_SPIN_LOCK	_lock;
 
-typedef HANDLE 		_rwlock; //Mutex
+typedef HANDLE 		_mutex; //Mutex
 
 typedef u32	_irqL;
 
@@ -87,15 +87,15 @@ __inline static _exit_critical_ex(_lock *plock, _irqL *pirqL)
 }
 
 
-__inline static void _enter_hwio_critical(_rwlock *prwlock, _irqL *pirqL)
+__inline static void _enter_critical_mutex(_mutex *pmutex, _irqL *pirqL)
 {
-	WaitForSingleObject(*prwlock, INFINITE );
+	WaitForSingleObject(*pmutex, INFINITE );
 
 }
 
-__inline static void _exit_hwio_critical(_rwlock *prwlock, _irqL *pirqL)
+__inline static void _exit_critical_mutex(_mutex *pmutex, _irqL *pirqL)
 {
-	ReleaseMutex(*prwlock);
+	ReleaseMutex(*pmutex);
 }
 
 __inline static void list_delete(_list *plist)

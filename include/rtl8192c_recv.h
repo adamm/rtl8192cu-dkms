@@ -66,10 +66,15 @@
 #ifdef PLATFORM_OS_CE
 #define MAX_RECVBUF_SZ (8192+1024) // 8K+1k
 #else
+	#ifndef CONFIG_MINIMAL_MEMORY_USAGE
 //#define MAX_RECVBUF_SZ (32768) // 32k
 //#define MAX_RECVBUF_SZ (16384) //16K
 //#define MAX_RECVBUF_SZ (10240) //10K
-#define MAX_RECVBUF_SZ (15360) // 15k < 16k
+//#define MAX_RECVBUF_SZ (15360) // 15k < 16k
+#define MAX_RECVBUF_SZ (8192+1024) // 8K+1k
+	#else
+		#define MAX_RECVBUF_SZ (2048) // 2K
+	#endif
 #endif
 
 #endif
@@ -197,6 +202,8 @@ struct recv_buf{
 	u8 reuse;
 #endif
 
+	struct rtw_transfer_buffer *rx_transfer_buf;
+
 	uint  len;
 	u8 *phead;
 	u8 *pdata;
@@ -206,6 +213,9 @@ struct recv_buf{
 	u8 *pbuf;
 	u8 *pallocated_buf;
 
+#ifdef DBG_RECV_BUF
+	u8 no;
+#endif
 
 };
 

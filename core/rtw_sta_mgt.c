@@ -74,12 +74,16 @@ u32	_rtw_init_sta_priv(struct	sta_priv *pstapriv)
 	
 _func_enter_;	
 
-	pstapriv->pallocated_stainfo_buf = _rtw_malloc (sizeof(struct sta_info) * NUM_STA+ 4);
+	#ifdef MEM_ALLOC_REFINE
+	pstapriv->pallocated_stainfo_buf = rtw_zvmalloc (sizeof(struct sta_info) * NUM_STA+ 4);
+	#else
+	pstapriv->pallocated_stainfo_buf = rtw_zmalloc (sizeof(struct sta_info) * NUM_STA+ 4);
+	#endif
 	if(!pstapriv->pallocated_stainfo_buf)
 		return _FAIL;
 
 	pstapriv->pstainfo_buf = pstapriv->pallocated_stainfo_buf + 4 - 
-		((unsigned int)(pstapriv->pallocated_stainfo_buf ) & 3);
+		((SIZE_PTR)(pstapriv->pallocated_stainfo_buf ) & 3);
 
 	_rtw_init_queue(&pstapriv->free_sta_queue);
 
@@ -166,7 +170,7 @@ static void mfree_all_stainfo(struct sta_priv *pstapriv )
 	
 _func_enter_;	
 
-	_enter_critical(&pstapriv->sta_hash_lock, &irqL);
+	_enter_critical_bh(&pstapriv->sta_hash_lock, &irqL);
 
 	phead = get_list_head(&pstapriv->free_sta_queue);
 	plist = get_next(phead);
@@ -179,7 +183,7 @@ _func_enter_;
 		mfree_stainfo(psta);
 	}
 	
-	_exit_critical(&pstapriv->sta_hash_lock, &irqL);
+	_exit_critical_bh(&pstapriv->sta_hash_lock, &irqL);
 
 _func_exit_;	
 
@@ -204,7 +208,11 @@ _func_enter_;
 	if(pstapriv){
 		mfree_sta_priv_lock(pstapriv);
 
-		_rtw_mfree(pstapriv->pallocated_stainfo_buf, sizeof(struct sta_info)*NUM_STA+4);		
+		#ifdef MEM_ALLOC_REFINE
+		rtw_vmfree(pstapriv->pallocated_stainfo_buf, sizeof(struct sta_info)*NUM_STA+4);
+		#else
+		rtw_mfree(pstapriv->pallocated_stainfo_buf, sizeof(struct sta_info)*NUM_STA+4);
+		#endif
 	}
 	
 _func_exit_;
