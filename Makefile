@@ -293,6 +293,7 @@ clean:
 	cd hal/$(RTL871X)/usb ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko 
 	cd hal/$(RTL871X)/pcie ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko 
 	cd hal/$(RTL871X) ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko 
+	cd hal ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko 
 	cd os_dep/linux ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko 
 	cd os_dep ; rm -fr *.mod.c *.mod *.o .*.cmd *.ko 
 
