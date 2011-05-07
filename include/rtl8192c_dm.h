@@ -30,15 +30,16 @@
 //============================================================
 // structure and define
 //============================================================
-
 typedef struct _FALSE_ALARM_STATISTICS{
 	u32	Cnt_Parity_Fail;
-	u32	Cnt_Rate_Illegal;
+	u32  Cnt_Rate_Illegal;
 	u32	Cnt_Crc8_fail;
 	u32	Cnt_Mcs_fail;
 	u32	Cnt_Ofdm_fail;
 	u32	Cnt_Cck_fail;
 	u32	Cnt_all;
+	u32	Cnt_Fast_Fsync;
+	u32	Cnt_SB_Search_fail;
 }FALSE_ALARM_STATISTICS, *PFALSE_ALARM_STATISTICS;
 
 typedef struct _Dynamic_Initial_Gain_Threshold_
@@ -72,6 +73,10 @@ typedef struct _Dynamic_Initial_Gain_Threshold_
 	u8		CurCCKFAState;
 	u8		PreCCAState;
 	u8		CurCCAState;
+
+	u8		LargeFAHit;
+	u8		ForbiddenIGI;
+	u32		Recover_cnt;
 	
 }DIG_T;
 
@@ -91,9 +96,7 @@ typedef enum tag_CCK_Packet_Detection_Threshold_Type_Definition
 {
 	CCK_PD_STAGE_LowRssi = 0,
 	CCK_PD_STAGE_HighRssi = 1,
-	CCK_FA_STAGE_Low = 2,
-	CCK_FA_STAGE_High = 3,
-	CCK_PD_STAGE_MAX = 4,
+	CCK_PD_STAGE_MAX = 3,
 }DM_CCK_PDTH_E;
 
 typedef enum tag_1R_CCA_Type_Definition
@@ -237,6 +240,8 @@ struct btcoexist_priv	{
 #define		TxHighPwrLevel_Normal		0	
 #define		TxHighPwrLevel_Level1		1
 #define		TxHighPwrLevel_Level2		2
+#define		TxHighPwrLevel_BT1				3
+#define		TxHighPwrLevel_BT2				4
 
 #define		DM_Type_ByFW			0
 #define		DM_Type_ByDriver		1

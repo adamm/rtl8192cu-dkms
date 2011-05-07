@@ -1154,7 +1154,7 @@ enum ieee80211_category {
 	WLAN_CATEGORY_QOS = 1,
 	WLAN_CATEGORY_DLS = 2,
 	WLAN_CATEGORY_BACK = 3,
-	WLAN_CATEGORY_P2P = 4, //P2P public action frames
+	WLAN_CATEGORY_PUBLIC = 4, //P2P public action frames
 	WLAN_CATEGORY_RADIO_MEASUREMENT  = 5,
 	WLAN_CATEGORY_FT = 6,
 	WLAN_CATEGORY_HT = 7,
@@ -1170,6 +1170,11 @@ enum ieee80211_spectrum_mgmt_actioncode {
 	WLAN_ACTION_SPCT_TPC_RPRT = 3,
 	WLAN_ACTION_SPCT_CHL_SWITCH = 4,
 	WLAN_ACTION_SPCT_EXT_CHL_SWITCH = 5,
+};
+
+enum _PUBLIC_ACTION{
+	ACT_PUBLIC_BSSCOEXIST = 0, // 20/40 BSS Coexistence
+	ACT_PUBLiC_MP = 7, // Measurement Pilot
 };
 
 /* BACK action code */

@@ -306,6 +306,10 @@ extern	void	PHY_SetRFReg(	IN	PADAPTER			Adapter,
 extern	int	PHY_MACConfig8192C(	IN	PADAPTER	Adapter	);
 extern	int	PHY_BBConfig8192C(	IN	PADAPTER	Adapter	);
 extern	int	PHY_RFConfig8192C(	IN	PADAPTER	Adapter	);
+
+#ifdef RTL8192C_RECONFIG_TO_1T1R
+extern void	PHY_Reconfig_To_1T1R(_adapter *padapter);
+#endif
 /* RF config */
 extern	int	PHY_ConfigRFWithParaFile(	IN	PADAPTER	Adapter,
 												IN	u8* 	pFileName,

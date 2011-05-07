@@ -356,7 +356,7 @@ _func_enter_;
 	RT_TRACE( _module_hci_ops_os_c_, _drv_info_, ("+usb_write_mem_complete %p\n", Context));
 
 #if 1
-	_enter_critical(&(pio_q->lock), &irqL);
+	_enter_critical_bh(&(pio_q->lock), &irqL);
 	
 
 	//free irp in processing list...	
@@ -368,7 +368,7 @@ _func_enter_;
 		_rtw_up_sema(&pio_req->sema);
 	}
 
-	_exit_critical(&(pio_q->lock), &irqL);
+	_exit_critical_bh(&(pio_q->lock), &irqL);
 #endif
 
 
@@ -431,7 +431,7 @@ _func_enter_;
 		goto exit;
 	}	
 
-	_enter_critical(&(pio_queue->lock), &irqL);
+	_enter_critical_bh(&(pio_queue->lock), &irqL);
 
 
 	// insert the io_request into processing io_queue
@@ -488,7 +488,7 @@ _func_enter_;
 
 	RT_TRACE( _module_hci_ops_os_c_, _drv_info_, ("-usb_write_mem(%X)\n",pio_req->usb_transfer_write_mem));
 
-	_exit_critical(&(pio_queue->lock), &irqL);
+	_exit_critical_bh(&(pio_queue->lock), &irqL);
 
 	_rtw_down_sema(&pio_req->sema); 
 	free_ioreq(pio_req, pio_queue);
@@ -639,10 +639,10 @@ _func_enter_;
 	{
 		if(pcontext->pbuf)
 		{			
-			_rtw_mfree(pcontext->pbuf, sizeof(int));	
+			rtw_mfree(pcontext->pbuf, sizeof(int));	
 		}	
 
-		_rtw_mfree((u8*)pcontext, sizeof(struct zero_bulkout_context));	
+		rtw_mfree((u8*)pcontext, sizeof(struct zero_bulkout_context));	
 	}	
 
 _func_exit_;
@@ -674,9 +674,9 @@ _func_enter_;
 	}
 
 
-	pcontext = (struct zero_bulkout_context *)_rtw_malloc(sizeof(struct zero_bulkout_context));
+	pcontext = (struct zero_bulkout_context *)rtw_zmalloc(sizeof(struct zero_bulkout_context));
 
-	pbuf = (unsigned char *)_rtw_malloc(sizeof(int));	
+	pbuf = (unsigned char *)rtw_zmalloc(sizeof(int));	
 
 	len = 0;
 	
@@ -1013,10 +1013,10 @@ uint usb_init_intf_priv(struct intf_priv *pintfpriv)
 	pintfpriv->io_rsz = 0;
 
     //  init io_rwmem buffer
-	pintfpriv->allocated_io_rwmem = _rtw_malloc(pintfpriv->max_iosz +4);
+	pintfpriv->allocated_io_rwmem = rtw_zmalloc(pintfpriv->max_iosz +4);
     if (pintfpriv->allocated_io_rwmem == NULL)
     {
-	    _rtw_mfree((u8 *)(pintfpriv->allocated_io_rwmem), pintfpriv->max_iosz +4);
+	    rtw_mfree((u8 *)(pintfpriv->allocated_io_rwmem), pintfpriv->max_iosz +4);
 	    return _FAIL;
     }
     else
@@ -1028,10 +1028,10 @@ uint usb_init_intf_priv(struct intf_priv *pintfpriv)
 #ifndef PLATFORM_OS_CE
 
     //  init io_r_mem buffer
-	pintfpriv->allocated_io_r_mem = _rtw_malloc(pintfpriv->max_iosz +4);
+	pintfpriv->allocated_io_r_mem = rtw_zmalloc(pintfpriv->max_iosz +4);
     if (pintfpriv->allocated_io_r_mem == NULL)
     {
-	    _rtw_mfree((u8 *)(pintfpriv->allocated_io_r_mem), pintfpriv->max_iosz +4);
+	    rtw_mfree((u8 *)(pintfpriv->allocated_io_r_mem), pintfpriv->max_iosz +4);
 	    return _FAIL;
     }
     else
@@ -1048,8 +1048,8 @@ void usb_unload_intf_priv(struct intf_priv *pintfpriv)
 {
 #ifndef PLATFORM_OS_CE
 
-	_rtw_mfree((u8 *)(pintfpriv->allocated_io_rwmem), pintfpriv->max_iosz+4);
-    _rtw_mfree((u8 *)(pintfpriv->allocated_io_r_mem), pintfpriv->max_iosz+4);
+	rtw_mfree((u8 *)(pintfpriv->allocated_io_rwmem), pintfpriv->max_iosz+4);
+    rtw_mfree((u8 *)(pintfpriv->allocated_io_r_mem), pintfpriv->max_iosz+4);
 #endif
 
 	RT_TRACE( _module_hci_ops_os_c_, _drv_info_, ("%s(%u)\n",__FUNCTION__, __LINE__));

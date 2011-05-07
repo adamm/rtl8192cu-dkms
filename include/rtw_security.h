@@ -132,6 +132,9 @@ struct security_priv
 	u8	binstallGrpkey;
 	u8	busetkipkey;
 	_timer tkip_timer;
+	#ifdef ENABLE_HW_ENC_TIMER
+	_timer enable_hw_enc_timer;
+	#endif
 	u8	bcheck_grpkey;
 	u8	bgrpkey_handshake;
 	
@@ -279,5 +282,8 @@ void rtw_use_tkipkey_handler (
 #ifdef PLATFORM_LINUX
 void rtw_use_tkipkey_handler(void* FunctionContext);
 #endif
+
+void rtw_enable_hw_enc_handler(void* FunctionContext);
+
 #endif	//__RTL871X_SECURITY_H_
 

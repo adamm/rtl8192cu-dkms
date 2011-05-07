@@ -125,7 +125,7 @@ _func_enter_;
 		cnt = ((cnt + 4) >> 2) << 2;
 #endif
 
-	mem = _rtw_malloc(cnt);
+	mem = rtw_malloc(cnt);
 	if (mem == NULL) {
 		RT_TRACE(_module_hci_ops_os_c_, _drv_emerg_,
 			 ("SDIO_STATUS_NO_RESOURCES - memory alloc fail\n"));
@@ -150,7 +150,7 @@ _func_enter_;
 		status = _SUCCESS;
 	}
 
-	_rtw_mfree(mem, cnt);
+	rtw_mfree(mem, cnt);
 
 _func_exit_;
 
@@ -202,10 +202,10 @@ _func_enter_;
 	if (cnt % 4)
 		cnt = ((cnt + 4) >> 2) << 2;
 	if (cnt != cnt_org) {
-		pdata = _rtw_malloc(cnt);
+		pdata = rtw_malloc(cnt);
 		if (pdata == NULL) {
 			RT_TRACE(_module_hci_ops_os_c_, _drv_emerg_,
-				 ("SDIO_STATUS_NO_RESOURCES - _rtw_malloc fail\n"));
+				 ("SDIO_STATUS_NO_RESOURCES - rtw_malloc fail\n"));
 			return _FAIL;
 		}
 		status = sdio_memcpy_fromio(func, pdata, addr&0x1FFFF, cnt);
@@ -214,7 +214,7 @@ _func_enter_;
 				 ("sdbus_write_reg_int read failed 0x%x\n "
 				  "***** Addr = %x *****\n"
 				  "***** Length = %d *****\n", status, addr, cnt));
-			_rtw_mfree(pdata, cnt);
+			rtw_mfree(pdata, cnt);
 			return _FAIL;
 		}
 		_rtw_memcpy(pdata + addr_offset, pdata_org, cnt_org);
@@ -235,7 +235,7 @@ _func_enter_;
 
 #ifdef CONFIG_IO_4B
 	if (cnt != cnt_org)
-		_rtw_mfree(pdata, cnt);
+		rtw_mfree(pdata, cnt);
 #endif
 
 _func_exit_;
@@ -451,7 +451,7 @@ void sd_recv_rxfifo(PADAPTER padapter)
 //	ppending_recv_queue = &(precvpriv->recv_pending_queue);
 
 	rx_blknum = padapter->dvobjpriv.rxblknum;
-//	_enter_hwio_critical(&padapter->dvobjpriv.rx_protect, &rx_proc_irq);
+//	_enter_critical_mutex(&padapter->dvobjpriv.rx_protect, &rx_proc_irq);
 //	padapter->dvobjpriv.rxblknum=rtw_read16(padapter, SDIO_RX0_RDYBLK_NUM);
 	sdio_read_int(padapter, SDIO_RX0_RDYBLK_NUM, 2, &padapter->dvobjpriv.rxblknum);
 	if (rx_blknum>padapter->dvobjpriv.rxblknum) {

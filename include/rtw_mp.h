@@ -273,6 +273,11 @@ struct bb_reg_param {
 	u32 offset;
 	u32 value;
 };
+
+struct wifi_status{
+	u8 status;
+	u8 reserve;	
+};
 //=======================================================================
 
 #define LOWER 	_TRUE

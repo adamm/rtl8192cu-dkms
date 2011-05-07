@@ -268,7 +268,7 @@ SwLedOff(
 
 			case LED_PIN_LED0:
 
-#ifdef CONFIG_ANTENNA_DIVERSITY
+				#ifdef CONFIG_ANTENNA_DIVERSITY
 				if(pHalData->AntDivCfg)
 				{
 					LedCfg = rtw_read8(padapter, REG_LEDCFG2);
@@ -277,7 +277,7 @@ SwLedOff(
 					//RT_TRACE(COMP_LED, DBG_LOUD, ("SwLedOff LED0 0x%x\n", PlatformEFIORead4Byte(Adapter, REG_LEDCFG2)));		
 				}
 				else
-			#endif
+				#endif
 				{				
 					LedCfg = rtw_read8(padapter, REG_LEDCFG0);
 					LedCfg &= 0x70; // Set to software control. 			

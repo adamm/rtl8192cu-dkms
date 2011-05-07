@@ -78,7 +78,7 @@ Under Async. IRP (SDIO/USB)
 The protection mechanism is through the pending queue.
 */
 
-	_rwlock rwlock;	
+	_mutex ioctl_mutex;
 
 	
 #ifdef PLATFORM_LINUX	
@@ -129,6 +129,10 @@ void rtw_close_fw(_adapter *padapter, void *phfwfile_hdl);
 
 #ifdef PLATFORM_LINUX
 int rtw_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+
+int rtw_init_netdev_name(struct net_device *pnetdev);
+struct net_device *rtw_init_netdev(void);
+
 #ifdef CONFIG_PROC_DEBUG
 void rtw_proc_init_one(struct net_device *dev);
 void rtw_proc_remove_one(struct net_device *dev);

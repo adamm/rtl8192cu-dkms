@@ -141,7 +141,7 @@ int init_mp_priv(struct mp_priv *pmp_priv)
 	_rtw_init_queue(&pmp_priv->free_mp_xmitqueue);
 
 	pmp_priv->pallocated_mp_xmitframe_buf = NULL;
-	pmp_priv->pallocated_mp_xmitframe_buf = _rtw_malloc(NR_MP_XMITFRAME * sizeof(struct mp_xmit_frame) + 4);
+	pmp_priv->pallocated_mp_xmitframe_buf = rtw_zmalloc(NR_MP_XMITFRAME * sizeof(struct mp_xmit_frame) + 4);
 	if (pmp_priv->pallocated_mp_xmitframe_buf == NULL) {
 		//ERR_8712("_init_mp_priv, alloc mp_xmitframe_buf fail\n");
 		res = _FAIL;
@@ -180,7 +180,7 @@ int free_mp_priv(struct mp_priv *pmp_priv)
 	//DBG_871X("+_free_mp_priv\n");
 
 	if (pmp_priv->pallocated_mp_xmitframe_buf)
-		_rtw_mfree(pmp_priv->pallocated_mp_xmitframe_buf, 0);
+		rtw_mfree(pmp_priv->pallocated_mp_xmitframe_buf, 0);
 
 	return res;
 }
@@ -455,17 +455,17 @@ void SetChannel(PADAPTER pAdapter)
 	RT_TRACE(_module_rtl871x_mp_ioctl_c_, _drv_notice_,
 		 ("+SetChannel: %d\n", pAdapter->mppriv.curr_ch));
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetChannel: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct SetChannel_parm*)_rtw_malloc(sizeof(struct SetChannel_parm));
+	pparm = (struct SetChannel_parm*)rtw_zmalloc(sizeof(struct SetChannel_parm));
  	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetChannel: memory allocate for parm fail!!!\n"));
 		return;
@@ -518,17 +518,17 @@ void SetTxPower(PADAPTER pAdapter)
 	struct SetTxPower_parm *pparm = NULL;
 	u16 code = GEN_CMD_CODE(_SetTxPower);
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("-SetTxPower: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct SetTxPower_parm*)_rtw_malloc(sizeof(struct SetTxPower_parm));
+	pparm = (struct SetTxPower_parm*)rtw_zmalloc(sizeof(struct SetTxPower_parm));
  	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("-SetTxPower: memory allocate for parm fail!!!\n"));
 		return;
@@ -581,17 +581,17 @@ void SetDataRate(PADAPTER pAdapter)
 	struct setdatarate_parm *pparm = NULL;
 	u16 code = GEN_CMD_CODE(_SetDataRate);
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetDataRate: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct setdatarate_parm*)_rtw_malloc(sizeof(struct setdatarate_parm));
+	pparm = (struct setdatarate_parm*)rtw_zmalloc(sizeof(struct setdatarate_parm));
 	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetDataRate: memory allocate for parm fail!!!\n"));
 		return;
@@ -620,17 +620,17 @@ void SwitchBandwidth(PADAPTER pAdapter)
 	struct SwitchBandwidth_parm *pparm = NULL;
 	u16 code = GEN_CMD_CODE(_SwitchBandwidth);
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SwitchBandwidth: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct SwitchBandwidth_parm*)_rtw_malloc(sizeof(struct SwitchBandwidth_parm));
+	pparm = (struct SwitchBandwidth_parm*)rtw_zmalloc(sizeof(struct SwitchBandwidth_parm));
 	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SwitchBandwidth: memory allocate for parm fail!!!\n"));
 		return;
@@ -742,17 +742,17 @@ void SwitchAntenna(PADAPTER pAdapter)
 	struct SwitchAntenna_parm *pparm = NULL;
 	u16 code = GEN_CMD_CODE(_SwitchAntenna);
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SwitchAntenna: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct SwitchAntenna_parm*)_rtw_malloc(sizeof(struct SwitchAntenna_parm));
+	pparm = (struct SwitchAntenna_parm*)rtw_zmalloc(sizeof(struct SwitchAntenna_parm));
 	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SwitchAntenna: memory allocate for parm fail!!!\n"));
 		return;
@@ -853,17 +853,17 @@ void SetCrystalCap(PADAPTER pAdapter)
 	struct SetCrystalCap_parm *pparm = NULL;
 	u16 code = GEN_CMD_CODE(_SetCrystalCap);
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetCrystalCap: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct SetCrystalCap_parm*)_rtw_malloc(sizeof(struct SetCrystalCap_parm));
+	pparm = (struct SetCrystalCap_parm*)rtw_zmalloc(sizeof(struct SetCrystalCap_parm));
 	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetCrystalCap: memory allocate for parm fail!!!\n"));
 		return;
@@ -916,17 +916,17 @@ void SetSingleCarrierTx(PADAPTER pAdapter, u8 bStart)
 	struct SetSingleCarrierTx_parm *pparm = NULL;
 	u16 code = GEN_CMD_CODE(_SetSingleCarrierTx);
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetSingleCarrierTx: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct SetSingleCarrierTx_parm*)_rtw_malloc(sizeof(struct SetSingleCarrierTx_parm));
+	pparm = (struct SetSingleCarrierTx_parm*)rtw_zmalloc(sizeof(struct SetSingleCarrierTx_parm));
 	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetSingleCarrierTx: memory allocate for parm fail!!!\n"));
 		return;
@@ -983,17 +983,17 @@ void SetSingleToneTx(PADAPTER pAdapter, u8 bStart)
 	struct SetSingleToneTx_parm *pparm = NULL;
 	u16 code = GEN_CMD_CODE(_SetSingleToneTx);
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetSingleToneTx: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct SetSingleToneTx_parm*)_rtw_malloc(sizeof(struct SetSingleToneTx_parm));
+	pparm = (struct SetSingleToneTx_parm*)rtw_zmalloc(sizeof(struct SetSingleToneTx_parm));
 	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetSingleToneTx: memory allocate for parm fail!!!\n"));
 		return;
@@ -1062,17 +1062,17 @@ void SetCarrierSuppressionTx(PADAPTER pAdapter, u8 bStart)
 	struct SetCarrierSuppressionTx_parm *pparm = NULL;
 	u16 code = GEN_CMD_CODE(_SetCarrierSuppressionTx);
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetSingleToneTx: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct SetCarrierSuppressionTx_parm*)_rtw_malloc(sizeof(struct SetCarrierSuppressionTx_parm));
+	pparm = (struct SetCarrierSuppressionTx_parm*)rtw_zmalloc(sizeof(struct SetCarrierSuppressionTx_parm));
 	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetCarrierSuppressionTx: memory allocate for parm fail!!!\n"));
 		return;
@@ -1218,17 +1218,17 @@ void SetContinuousTx(PADAPTER pAdapter, u8 bStart)
 	struct SetContinuousTx_parm *pparm = NULL;
 	u16 code = GEN_CMD_CODE(_SetContinuousTx);
 
-	pcmd = (struct cmd_obj*)_rtw_malloc(sizeof(struct cmd_obj));
+	pcmd = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd == NULL) {
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetContinuousTx: memory allocate for cmd_obj fail!!!\n"));
 		return;
 	}
 
-	pparm = (struct SetContinuousTx_parm*)_rtw_malloc(sizeof(struct SetContinuousTx_parm));
+	pparm = (struct SetContinuousTx_parm*)rtw_zmalloc(sizeof(struct SetContinuousTx_parm));
 	if (pparm == NULL) {
 		if (pcmd != NULL)
-			_rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
+			rtw_mfree((u8*)pcmd, sizeof(struct cmd_obj));
 		RT_TRACE(_module_rtl871x_mp_c_, _drv_err_,
 			 ("SetContinuousTx: memory allocate for parm fail!!!\n"));
 		return;

@@ -245,7 +245,7 @@ _func_enter_;
 				arcfour_encrypt(&mycontext, payload+length, crc, 4);
 	
 			pframe+=pxmitpriv->frag_len;
-			pframe=(u8 *)RND4((uint)(pframe));
+			pframe=(u8 *)RND4((SIZE_PTR)(pframe));
 
 			}
 			
@@ -742,7 +742,7 @@ _func_enter_;
 					arcfour_encrypt(&mycontext, payload+length, crc, 4);
 	
 				pframe+=pxmitpriv->frag_len;
-				pframe=(u8 *)RND4((uint)(pframe));
+				pframe=(u8 *)RND4((SIZE_PTR)(pframe));
 
 				}
 			}
@@ -1558,7 +1558,7 @@ _func_enter_;
 				
 					aes_cipher(prwskey,pattrib->hdrlen,pframe, length);
 				pframe+=pxmitpriv->frag_len;
-				pframe=(u8*)RND4((uint)(pframe));
+				pframe=(u8*)RND4((SIZE_PTR)(pframe));
 
 				}
 			}
@@ -1926,10 +1926,26 @@ _func_enter_;
 	*/
 	
 	padapter->securitypriv.busetkipkey=_TRUE;
+	#ifdef DBG_SHOW_USETKIPKEY
+	DBG_871X("%s:%d adapter->securitypriv.busetkipkey:%d\n", __FUNCTION__, __LINE__ ,padapter->securitypriv.busetkipkey);
+	#endif
 
 	RT_TRACE(_module_rtl871x_security_c_,_drv_err_,("^^^rtw_use_tkipkey_handler padapter->securitypriv.busetkipkey=%d^^^\n",padapter->securitypriv.busetkipkey));
 
 _func_exit_;	
 
 }
+
+#ifdef ENABLE_HW_ENC_TIMER
+void rtw_enable_hw_enc_handler(void *FunctionContext)
+{
+	_adapter *padapter = (_adapter *)FunctionContext;
+	struct security_priv *psecuritypriv = &(padapter->securitypriv);
+_func_enter_;
+	psecuritypriv->sw_encrypt = padapter->registrypriv.software_encrypt; // restore the encryption setting
+	DBG_871X("%s:%d Setting securitypriv.sw_encrypt:%d\n", __FUNCTION__, __LINE__ ,psecuritypriv->sw_encrypt);
+	
+_func_exit_;	
+}
+#endif
 

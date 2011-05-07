@@ -254,6 +254,7 @@ struct	intf_hdl {
 */
 	_adapter *padapter;
 	struct dvobj_priv *pintf_dev;//	pointer to &(padapter->dvobjpriv);
+	_mutex io_mutex;
 	struct _io_ops	io_ops;
 
 };

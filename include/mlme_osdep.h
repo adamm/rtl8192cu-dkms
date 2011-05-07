@@ -32,6 +32,7 @@ extern void rtw_init_mlme_timer(_adapter *padapter);
 extern void rtw_os_indicate_disconnect( _adapter *adapter );
 extern void rtw_os_indicate_connect( _adapter *adapter );
 extern void rtw_report_sec_ie(_adapter *adapter,u8 authmode,u8 *sec_ie);
+extern void rtw_reset_securitypriv( _adapter *adapter );
 
 #endif	//_MLME_OSDEP_H_
 

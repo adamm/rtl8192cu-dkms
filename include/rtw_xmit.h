@@ -46,6 +46,14 @@
 
 #define MAX_NUMBLKS		(1)
 
+#define XMIT_QUEUE_ENTRY	(4)
+
+#define XMIT_VO_QUEUE (0)
+#define XMIT_VI_QUEUE (1)
+#define XMIT_BE_QUEUE (2)
+#define XMIT_BK_QUEUE (3)
+
+
 
 #define WEP_IV(pattrib_iv, dot11txpn, keyidx)\
 do{\
@@ -172,6 +180,8 @@ struct xmit_buf
 
 	void *priv_data;
 
+	u8 flags;
+
 #ifdef CONFIG_USB_HCI	
        
        u32 sz[8];	   
@@ -209,6 +219,10 @@ struct xmit_buf
 #endif
 	
 
+#ifdef DBG_XMIT_BUF
+	u8 no;
+#endif
+
 };
 
 struct xmit_frame
@@ -235,6 +249,10 @@ struct xmit_frame
 #if USB_TX_AGGREGATION_92C
 	u8 agg_num;
 	u8 pkt_offset;
+#endif
+
+#ifdef DBG_XMIT_FRAME
+	u8 no;
 #endif
 };
 
@@ -387,7 +405,7 @@ extern struct xmit_frame *rtw_alloc_xmitframe(struct xmit_priv *pxmitpriv);
 extern s32 rtw_free_xmitframe(struct xmit_priv *pxmitpriv, struct xmit_frame *pxmitframe);
 extern void rtw_free_xmitframe_queue(struct xmit_priv *pxmitpriv, _queue *pframequeue );
 extern s32 xmitframe_enqueue(_adapter *padapter, struct xmit_frame *pxmitframe);
-extern struct xmit_frame* rtw_dequeue_xframe(struct xmit_priv *pxmitpriv, struct hw_xmit *phwxmit_i, sint entry);
+extern struct xmit_frame* rtw_dequeue_xframe(struct xmit_priv *pxmitpriv, u8 flags);
 
 extern s32 rtw_xmit_classifier(_adapter *padapter, struct xmit_frame *pxmitframe);
 extern thread_return xmit_thread(thread_context context);

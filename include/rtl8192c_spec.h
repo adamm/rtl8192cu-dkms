@@ -944,6 +944,7 @@ typedef	enum _BOARD_TYPE_8192CUSB{
 #define	EEPROM_NORMAL_BoardType					EEPROM_RF_OPT1	//[7:5]
 #define BOARD_TYPE_NORMAL_MASK					0xE0
 #define BOARD_TYPE_TEST_MASK					0x0F
+#define EEPROM_EASY_REPLACEMENT				0x50//BIT0 1 for build-in module, 0 for external dongle
 //-------------------------------------------------------------
 //	EEPROM content definitions
 //-------------------------------------------------------------
@@ -1202,8 +1203,17 @@ Current IOREG MAP
 
 //2 9346CR
 
-#define		BOOT_FROM_EEPROM		BIT(4)
-#define		EEPROM_EN				BIT(5)
+
+#define 	EEDO					BIT(0)
+#define 	EEDI					BIT(1)
+#define 	EESK					BIT(2)
+#define 	EECS					BIT(3)
+//#define 	EERPROMSEL			BIT(4)
+//#define 	EEPROM_EN			BIT(5)
+#define	BOOT_FROM_EEPROM		BIT(4)
+#define	EEPROM_EN				BIT(5)
+#define 	EEM0					BIT(6)
+#define 	EEM1					BIT(7)
 
 
 //2 AFE_MISC
