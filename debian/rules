@@ -13,7 +13,7 @@ ARCH_SUFFIX=i386
 endif
 
 %:
-	dh "$@" --with modaliases
+	dh "$@" #--with modaliases
 
 # we don't actually build/clean the source here, it's dkms
 override_dh_auto_clean:
@@ -29,9 +29,9 @@ override_dh_auto_install:
 			debian/$$i.in > debian/$$i;      \
 	done
 	# Generate the modaliases
-	$(SHELL) $(CURDIR)/debian/$(DRIVER_NAME)_supported \
-		$(CURDIR)/src/src/wl/sys/wl_linux.c wl $(PKG_kernel_src) \
-		> $(CURDIR)/debian/$(PKG_kernel_src).modaliases
+	#$(SHELL) $(CURDIR)/debian/$(DRIVER_NAME)_supported \
+	#	$(CURDIR)/src/src/wl/sys/wl_linux.c wl $(PKG_kernel_src) \
+	#	> $(CURDIR)/debian/$(PKG_kernel_src).modaliases
 
 override_dh_clean:
 	dh_clean
