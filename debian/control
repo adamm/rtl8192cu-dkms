@@ -1,6 +1,7 @@
 Source: rtl8192cu
 Section: admin
 Priority: optional
+Maintainer: Adam McDaniel <adam@jolicloud.org>
 Standards-Version: 3.9.1
 Build-Depends: debhelper (>= 7.0.50~),
  dh-modaliases
