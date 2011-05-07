@@ -256,7 +256,7 @@ $(MODULE_NAME)-$(CONFIG_MP_INCLUDED) += mp/rtl871x_mp.o \
 					mp/rtl871x_mp_ioctl.o \
 					ioctl/rtl871x_ioctl_rtl.o
 
-obj-$(CONFIG_RTL8192CU) := $(MODULE_NAME).o
+obj-m := $(MODULE_NAME).o
 
 
 else
