@@ -1,3 +1,10 @@
+rtl8192cu-dkms (2.0.1502.20110402-0jolicloud1) natty; urgency=low
+
+  * Updated rtl8192cu to 2.0.1502.20110402
+  * Added patch 0001-remove_autosuspend_delay.patch
+
+ -- Adam McDaniel <adamm@raiden>  Sat, 07 May 2011 11:42:04 -0600
+
 rtl8192cu (2.0.1212.20101205-0jolicloud1) natty; urgency=low
 
   * Copied DKMS structure from bcmwl-kernel-source
