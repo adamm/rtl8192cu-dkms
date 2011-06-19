@@ -1,4 +1,4 @@
-Source: rtl8192cu
+Source: rtl8192cu-dkms
 Section: admin
 Priority: optional
 Maintainer: Adam McDaniel <adam@jolicloud.org>
@@ -6,7 +6,7 @@ Standards-Version: 3.9.1
 Build-Depends: debhelper (>= 7.0.50~),
  dh-modaliases
 
-Package: rtl8192cu-kernel-source
+Package: rtl8192cu-dkms
 Architecture: i386 amd64
 Depends: ${misc:Depends}, dkms, linux-libc-dev, libc6-dev, linux-headers-generic [i386 amd64] | linux-headers, linux-headers-lpia [lpia]
 XB-Modaliases: ${modaliases}
